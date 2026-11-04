@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+
+# Dependencies
+node_modules/
+
+# Build output
+out/
+dist/
+release/
+*.tsbuildinfo
+
+# Test output
+coverage/
+playwright-report/
+test-results/
+
+# Local environment
+.env
+.env.*
+*.log
