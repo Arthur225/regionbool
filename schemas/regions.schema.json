@@ -1,0 +1,102 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RegionBool project file (.regionbool/regions.json)",
+  "description": "Regions drawn for one robot project. All lengths and coordinates are in meters, using WPILib field coordinates. See docs/data-model.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "field", "output", "regions"],
+  "properties": {
+    "version": { "const": 1 },
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lengthMeters", "widthMeters", "symmetry"],
+      "properties": {
+        "lengthMeters": { "type": "number", "exclusiveMinimum": 0 },
+        "widthMeters": { "type": "number", "exclusiveMinimum": 0 },
+        "symmetry": { "enum": ["rotational", "mirrored"] }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["packageName", "className"],
+      "properties": {
+        "packageName": { "type": "string", "minLength": 1 },
+        "className": { "type": "string", "minLength": 1 }
+      }
+    },
+    "regions": { "type": "array", "items": { "$ref": "#/definitions/region" } }
+  },
+  "definitions": {
+    "point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": { "x": { "type": "number" }, "y": { "type": "number" } }
+    },
+    "region": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "allianceMode", "shapes"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string" },
+        "allianceMode": { "enum": ["fixed", "alliance-relative"] },
+        "shapes": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "$ref": "#/definitions/rect" },
+              { "$ref": "#/definitions/circle" },
+              { "$ref": "#/definitions/polygon" }
+            ]
+          }
+        }
+      }
+    },
+    "rect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "mode", "kind", "cx", "cy", "width", "height", "rotationDeg"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "mode": { "enum": ["add", "subtract"] },
+        "kind": { "const": "rect" },
+        "cx": { "type": "number" },
+        "cy": { "type": "number" },
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "height": { "type": "number", "exclusiveMinimum": 0 },
+        "rotationDeg": { "type": "number" }
+      }
+    },
+    "circle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "mode", "kind", "cx", "cy", "radius"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "mode": { "enum": ["add", "subtract"] },
+        "kind": { "const": "circle" },
+        "cx": { "type": "number" },
+        "cy": { "type": "number" },
+        "radius": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "polygon": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "mode", "kind", "points"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "mode": { "enum": ["add", "subtract"] },
+        "kind": { "enum": ["triangle", "polygon"] },
+        "points": {
+          "type": "array",
+          "minItems": 3,
+          "items": { "$ref": "#/definitions/point" }
+        }
+      }
+    }
+  }
+}
