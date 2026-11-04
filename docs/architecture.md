@@ -47,7 +47,7 @@ The renderer will display data read from robot projects, such as region names an
 
 ## Planned data flow
 
-This is the design for later build steps, and none of it exists yet.
+This is the design for the finished app. The model, `geometry.ts` and `codegen.ts` exist, and the rest comes in later build steps.
 
 ```mermaid
 flowchart LR
