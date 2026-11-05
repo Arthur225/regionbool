@@ -18,6 +18,8 @@ export interface JavaProfile {
   geometryImports: readonly string[];
   /** Imports needed only when a region is alliance-relative. */
   allianceImports: readonly string[];
+  /** Imports for the Field2d helper, which every generated class has. */
+  field2dImports: readonly string[];
   /** A boolean Java expression that's true on red and false on blue or an unknown alliance. */
   isRedExpression: string;
 }
@@ -29,19 +31,26 @@ export const JAVA_PROFILES: Readonly<Record<JavaProfileId, JavaProfile>> = {
     label: 'WPILib 2025, 2026 and early 2027 alphas (edu.wpi.first)',
     geometryImports: [
       'edu.wpi.first.math.geometry.Pose2d',
+      'edu.wpi.first.math.geometry.Rotation2d',
       'edu.wpi.first.math.geometry.Translation2d',
     ],
     allianceImports: [
       'edu.wpi.first.wpilibj.DriverStation',
       'edu.wpi.first.wpilibj.DriverStation.Alliance',
     ],
+    field2dImports: ['edu.wpi.first.wpilibj.smartdashboard.Field2d'],
     isRedExpression: 'DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red',
   },
   modern: {
     id: 'modern',
     label: 'WPILib 2027 alpha-6 and newer (org.wpilib)',
-    geometryImports: ['org.wpilib.math.geometry.Pose2d', 'org.wpilib.math.geometry.Translation2d'],
+    geometryImports: [
+      'org.wpilib.math.geometry.Pose2d',
+      'org.wpilib.math.geometry.Rotation2d',
+      'org.wpilib.math.geometry.Translation2d',
+    ],
     allianceImports: ['org.wpilib.driverstation.Alliance', 'org.wpilib.driverstation.MatchState'],
+    field2dImports: ['org.wpilib.smartdashboard.Field2d'],
     isRedExpression: 'MatchState.getAlliance().orElse(Alliance.BLUE) == Alliance.RED',
   },
 };

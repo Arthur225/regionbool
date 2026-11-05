@@ -15,6 +15,15 @@ describe('regions.schema.json', () => {
     expect(validate(saved), JSON.stringify(validate.errors)).toBe(true);
   });
 
+  it('accepts the optional profile and hash', () => {
+    const project = sampleProject();
+    project.output.javaProfile = 'modern';
+    project.generatedHash = 'abc';
+    expect(validate(JSON.parse(JSON.stringify(project)))).toBe(true);
+    (project.output as { javaProfile: string }).javaProfile = 'future';
+    expect(validate(JSON.parse(JSON.stringify(project)))).toBe(false);
+  });
+
   it.each<[string, (project: ReturnType<typeof sampleProject>) => void]>([
     ['an unknown version', (p) => ((p as { version: number }).version = 2)],
     ['an unknown symmetry', (p) => ((p.field as { symmetry: string }).symmetry = 'diagonal')],

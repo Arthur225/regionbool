@@ -54,6 +54,22 @@ export function rectCorners(shape: RectShape): Point[] {
   });
 }
 
+/** How many sides a circle gets when it has to be drawn as a path, such as on a Field2d. */
+const CIRCLE_OUTLINE_SIDES = 32;
+
+/** Returns points around a shape's outline, without repeating the first one. */
+export function shapeOutline(shape: Shape): Point[] {
+  if (shape.kind === 'rect') return rectCorners(shape);
+  if (shape.kind !== 'circle') return shape.points;
+  return Array.from({ length: CIRCLE_OUTLINE_SIDES }, (_, i) => {
+    const angle = (i * 2 * Math.PI) / CIRCLE_OUTLINE_SIDES;
+    return {
+      x: roundMeters(shape.cx + shape.radius * Math.cos(angle)),
+      y: roundMeters(shape.cy + shape.radius * Math.sin(angle)),
+    };
+  });
+}
+
 /** Returns a shape's center: the average of a polygon's vertices. */
 export function shapeCenter(shape: Shape): Point {
   if (shape.kind === 'rect' || shape.kind === 'circle') return { x: shape.cx, y: shape.cy };

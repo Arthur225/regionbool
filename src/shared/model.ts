@@ -6,6 +6,8 @@
  * The on-disk form of {@link RegionProject} is described by `schemas/regions.schema.json`.
  */
 
+import type { JavaProfileId } from './javaProfiles';
+
 /** Current version of the `.regionbool/regions.json` format. */
 export const REGIONS_FILE_VERSION = 1;
 
@@ -102,6 +104,8 @@ export interface OutputInfo {
   packageName: string;
   /** Java class name, such as `FieldRegions`. */
   className: string;
+  /** The WPILib API the user confirmed for this project. If missing, the app detects it. */
+  javaProfile?: JavaProfileId;
 }
 
 /** Everything saved for one robot project in `.regionbool/regions.json`. */
@@ -110,6 +114,11 @@ export interface RegionProject {
   field: FieldInfo;
   output: OutputInfo;
   regions: Region[];
+  /**
+   * Hash of the Java file from the last export, used to notice hand edits. The main process owns
+   * this value on disk and ignores any sent by the renderer.
+   */
+  generatedHash?: string;
 }
 
 /** One problem found by {@link validateProject}. */

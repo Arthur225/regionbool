@@ -6,15 +6,25 @@
   "additionalProperties": false,
   "required": ["version", "field", "output", "regions"],
   "properties": {
-    "version": { "const": 1 },
+    "version": {
+      "const": 1
+    },
     "field": {
       "type": "object",
       "additionalProperties": false,
       "required": ["lengthMeters", "widthMeters", "symmetry"],
       "properties": {
-        "lengthMeters": { "type": "number", "exclusiveMinimum": 0 },
-        "widthMeters": { "type": "number", "exclusiveMinimum": 0 },
-        "symmetry": { "enum": ["rotational", "mirrored"] }
+        "lengthMeters": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "widthMeters": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "symmetry": {
+          "enum": ["rotational", "mirrored"]
+        }
       }
     },
     "output": {
@@ -22,34 +32,72 @@
       "additionalProperties": false,
       "required": ["packageName", "className"],
       "properties": {
-        "packageName": { "type": "string", "minLength": 1 },
-        "className": { "type": "string", "minLength": 1 }
+        "packageName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "className": {
+          "type": "string",
+          "minLength": 1
+        },
+        "javaProfile": {
+          "enum": ["legacy", "modern"]
+        }
       }
     },
-    "regions": { "type": "array", "items": { "$ref": "#/definitions/region" } }
+    "regions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/region"
+      }
+    },
+    "generatedHash": {
+      "type": "string",
+      "minLength": 1
+    }
   },
   "definitions": {
     "point": {
       "type": "object",
       "additionalProperties": false,
       "required": ["x", "y"],
-      "properties": { "x": { "type": "number" }, "y": { "type": "number" } }
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      }
     },
     "region": {
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "name", "allianceMode", "shapes"],
       "properties": {
-        "id": { "type": "string", "minLength": 1 },
-        "name": { "type": "string" },
-        "allianceMode": { "enum": ["fixed", "alliance-relative"] },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string"
+        },
+        "allianceMode": {
+          "enum": ["fixed", "alliance-relative"]
+        },
         "shapes": {
           "type": "array",
           "items": {
             "oneOf": [
-              { "$ref": "#/definitions/rect" },
-              { "$ref": "#/definitions/circle" },
-              { "$ref": "#/definitions/polygon" }
+              {
+                "$ref": "#/definitions/rect"
+              },
+              {
+                "$ref": "#/definitions/circle"
+              },
+              {
+                "$ref": "#/definitions/polygon"
+              }
             ]
           }
         }
@@ -60,14 +108,33 @@
       "additionalProperties": false,
       "required": ["id", "mode", "kind", "cx", "cy", "width", "height", "rotationDeg"],
       "properties": {
-        "id": { "type": "string", "minLength": 1 },
-        "mode": { "enum": ["add", "subtract"] },
-        "kind": { "const": "rect" },
-        "cx": { "type": "number" },
-        "cy": { "type": "number" },
-        "width": { "type": "number", "exclusiveMinimum": 0 },
-        "height": { "type": "number", "exclusiveMinimum": 0 },
-        "rotationDeg": { "type": "number" }
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mode": {
+          "enum": ["add", "subtract"]
+        },
+        "kind": {
+          "const": "rect"
+        },
+        "cx": {
+          "type": "number"
+        },
+        "cy": {
+          "type": "number"
+        },
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "rotationDeg": {
+          "type": "number"
+        }
       }
     },
     "circle": {
@@ -75,12 +142,26 @@
       "additionalProperties": false,
       "required": ["id", "mode", "kind", "cx", "cy", "radius"],
       "properties": {
-        "id": { "type": "string", "minLength": 1 },
-        "mode": { "enum": ["add", "subtract"] },
-        "kind": { "const": "circle" },
-        "cx": { "type": "number" },
-        "cy": { "type": "number" },
-        "radius": { "type": "number", "exclusiveMinimum": 0 }
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mode": {
+          "enum": ["add", "subtract"]
+        },
+        "kind": {
+          "const": "circle"
+        },
+        "cx": {
+          "type": "number"
+        },
+        "cy": {
+          "type": "number"
+        },
+        "radius": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
       }
     },
     "polygon": {
@@ -88,13 +169,22 @@
       "additionalProperties": false,
       "required": ["id", "mode", "kind", "points"],
       "properties": {
-        "id": { "type": "string", "minLength": 1 },
-        "mode": { "enum": ["add", "subtract"] },
-        "kind": { "enum": ["triangle", "polygon"] },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mode": {
+          "enum": ["add", "subtract"]
+        },
+        "kind": {
+          "enum": ["triangle", "polygon"]
+        },
         "points": {
           "type": "array",
           "minItems": 3,
-          "items": { "$ref": "#/definitions/point" }
+          "items": {
+            "$ref": "#/definitions/point"
+          }
         }
       }
     }
