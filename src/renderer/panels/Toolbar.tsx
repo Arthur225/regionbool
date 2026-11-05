@@ -1,5 +1,5 @@
 /** The top bar: project, drawing tools, add or hole mode, snapping, undo and redo. */
-import type { OpenProjectResult } from '../../shared/ipc';
+import { openProject, saveProject } from '../actions';
 import { GRID_SIZES, useEditor, type Tool } from '../store';
 
 const TOOLS: { tool: Tool; label: string; key: string }[] = [
@@ -11,23 +11,40 @@ const TOOLS: { tool: Tool; label: string; key: string }[] = [
   { tool: 'test', label: 'Test point', key: 'X' },
 ];
 
-export function Toolbar({ onProjectResult }: { onProjectResult(result: OpenProjectResult): void }) {
+export function Toolbar({ onExport }: { onExport(): void }) {
   const tool = useEditor((s) => s.tool);
   const drawMode = useEditor((s) => s.drawMode);
   const snapEnabled = useEditor((s) => s.snapEnabled);
   const gridMeters = useEditor((s) => s.gridMeters);
   const canUndo = useEditor((s) => s.past.length > 0);
   const canRedo = useEditor((s) => s.future.length > 0);
+  const project = useEditor((s) => s.project);
+  const dirty = useEditor((s) => s.doc !== s.savedDoc);
   const editor = useEditor.getState();
+  const needsProject = project ? undefined : 'Open a robot project first';
 
   return (
     <header className="toolbar">
       <h1>RegionBool</h1>
+      <button type="button" onClick={() => void openProject()}>
+        Open robot project
+      </button>
       <button
         type="button"
-        onClick={() => void window.regionbool.openProject().then(onProjectResult)}
+        disabled={!project || !dirty}
+        title={needsProject ?? 'Save regions to the project'}
+        onClick={() => void saveProject()}
       >
-        Open robot project
+        Save
+      </button>
+      <button
+        type="button"
+        className="primary"
+        disabled={!project}
+        title={needsProject ?? 'Generate the Java class'}
+        onClick={onExport}
+      >
+        Export Java
       </button>
 
       <div className="tool-group" role="group" aria-label="Tools">

@@ -10,7 +10,7 @@
  */
 import type { FieldDefinition } from './fields';
 import type { JavaProfileId } from './javaProfiles';
-import type { ValidationIssue } from './model';
+import type { RegionProject, ValidationIssue } from './model';
 
 /** Names of all IPC channels. */
 export const IpcChannel = {
@@ -18,6 +18,10 @@ export const IpcChannel = {
   GetAppInfo: 'app:get-info',
   /** Shows a folder picker and makes the chosen folder the current project. Returns {@link OpenProjectResult}. */
   OpenProject: 'project:open',
+  /** Forgets the current project. Nothing on disk changes. */
+  CloseProject: 'project:close',
+  /** Takes project data and saves it to `.regionbool/regions.json`. Returns {@link SaveResult}. */
+  SaveRegions: 'project:save',
   /** Returns the current {@link ProjectInfo}, or null if none is open. */
   GetCurrentProject: 'project:get-current',
   /** Takes project data and a profile id. Generates code without writing it. Returns {@link ExportPreviewResult}. */
@@ -75,9 +79,19 @@ export interface ProjectInfo {
   defaultPackageName: string;
 }
 
+/** What was found in a project's `.regionbool/regions.json`. */
+export type SavedRegions =
+  | { status: 'none' }
+  | { status: 'loaded'; project: RegionProject }
+  /** The file exists but can't be used. The app refuses to save over it. */
+  | { status: 'invalid'; message: string };
+
+/** The result of saving region data. */
+export type SaveResult = { ok: true } | { ok: false; message: string };
+
 /** The result of asking the user to pick a project. */
 export type OpenProjectResult =
-  | { status: 'opened'; project: ProjectInfo }
+  | { status: 'opened'; project: ProjectInfo; saved: SavedRegions }
   | { status: 'canceled' }
   /** The folder isn't a WPILib Java project. The current project stays open. */
   | { status: 'invalid'; path: string; reasons: string[] };
@@ -104,6 +118,11 @@ export type ExportPreviewResult =
       existing: string | null;
       /** What would be written. */
       generated: string;
+      /**
+       * True if the file was changed since the last export, so writing would lose those edits.
+       * Only known when `regions.json` recorded a hash for that export.
+       */
+      handEdited: boolean;
       /** Hash of the current file, passed back to confirm it hasn't changed. Null if no file. */
       existingHash: string | null;
     }
@@ -118,6 +137,9 @@ export type ExportWriteResult =
 export interface RegionBoolApi {
   getAppInfo(): Promise<AppInfo>;
   openProject(): Promise<OpenProjectResult>;
+  closeProject(): Promise<void>;
+  /** `project` is checked against the file schema by the main process. */
+  saveRegions(project: unknown): Promise<SaveResult>;
   getCurrentProject(): Promise<ProjectInfo | null>;
   /** `project` is checked against the file schema by the main process, so it's typed as unknown. */
   previewExport(project: unknown, profileId: JavaProfileId): Promise<ExportPreviewResult>;

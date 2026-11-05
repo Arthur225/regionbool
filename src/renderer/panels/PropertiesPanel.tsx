@@ -57,9 +57,10 @@ function ShapeFields({ shape }: { shape: Shape }) {
     case 'rect':
       return (
         <>
+          <p className="field-caption">Center</p>
           <div className="field-row">
             <NumberField
-              label="Center x"
+              label="x"
               unit="m"
               testId="prop-cx"
               value={shape.cx}
@@ -103,9 +104,10 @@ function ShapeFields({ shape }: { shape: Shape }) {
     case 'circle':
       return (
         <>
+          <p className="field-caption">Center</p>
           <div className="field-row">
             <NumberField
-              label="Center x"
+              label="x"
               unit="m"
               testId="prop-cx"
               value={shape.cx}
@@ -193,8 +195,9 @@ function PointTester() {
   );
 }
 
-export function PropertiesPanel({ project }: { project: ProjectInfo | null }) {
+export function PropertiesPanel() {
   const doc = useEditor((s) => s.doc);
+  const project = useEditor((s) => s.project);
   const tool = useEditor((s) => s.tool);
   const selectedRegionId = useEditor((s) => s.selectedRegionId);
   const selectedShapeId = useEditor((s) => s.selectedShapeId);
@@ -261,9 +264,32 @@ export function PropertiesPanel({ project }: { project: ProjectInfo | null }) {
             <dd>{project.gradleRioVersion ?? 'Unknown'}</dd>
             <dt>WPILib API</dt>
             <dd>{profileLabel(project)}</dd>
-            <dt>Package</dt>
-            <dd>{project.defaultPackageName}</dd>
           </dl>
+          <h2 className="subheading">Generated class</h2>
+          <label className="text-field">
+            Package
+            <input
+              data-testid="output-package"
+              value={doc.output.packageName}
+              onFocus={() => editor.beginGesture()}
+              onBlur={() => editor.endGesture()}
+              onChange={(event) =>
+                editor.setOutput({ ...doc.output, packageName: event.target.value })
+              }
+            />
+          </label>
+          <label className="text-field">
+            Class
+            <input
+              data-testid="output-class"
+              value={doc.output.className}
+              onFocus={() => editor.beginGesture()}
+              onBlur={() => editor.endGesture()}
+              onChange={(event) =>
+                editor.setOutput({ ...doc.output, className: event.target.value })
+              }
+            />
+          </label>
         </section>
       )}
     </aside>

@@ -14,10 +14,12 @@ import {
   type ExportWriteResult,
   type OpenProjectResult,
   type ProjectInfo,
+  type SaveResult,
 } from '../shared/ipc';
 import { previewExport, writeExport } from './export';
 import { getFieldImage, listFields } from './fields';
 import { detectProject } from './project';
+import { readSavedRegions, saveRegions } from './regionsFile';
 
 let currentProject: ProjectInfo | null = null;
 
@@ -70,8 +72,20 @@ export function registerIpcHandlers(): void {
     const detection = await detectProject(path);
     if (!detection.valid) return { status: 'invalid', path, reasons: detection.reasons };
     currentProject = detection.project;
-    return { status: 'opened', project: detection.project };
+    return {
+      status: 'opened',
+      project: detection.project,
+      saved: await readSavedRegions(detection.project.root),
+    };
   });
+
+  ipcMain.handle(IpcChannel.CloseProject, () => {
+    currentProject = null;
+  });
+
+  ipcMain.handle(IpcChannel.SaveRegions, (_event, data: unknown): Promise<SaveResult> =>
+    withProject((root) => saveRegions(root, data)),
+  );
 
   ipcMain.handle(IpcChannel.GetCurrentProject, (): ProjectInfo | null => currentProject);
 

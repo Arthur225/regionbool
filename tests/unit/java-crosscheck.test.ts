@@ -10,8 +10,9 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { generateJava } from '../../src/shared/codegen';
-import { regionContainsForAlliance, rectRotation } from '../../src/shared/geometry';
+import { generateJava, javaDouble } from '../../src/shared/codegen';
+import { shapeOutline } from '../../src/shared/shapeOps';
+import { flipPoint, regionContainsForAlliance, rectRotation } from '../../src/shared/geometry';
 import type { AllianceState } from '../../src/shared/geometry';
 import { JAVA_PROFILES, type JavaProfile } from '../../src/shared/javaProfiles';
 import { toMethodName } from '../../src/shared/model';
@@ -33,6 +34,24 @@ function writeSource(root: string, relativePath: string, source: string): string
 
 /** Minimal stand-ins for the WPILib classes generated code uses, matching their real signatures. */
 function stubs(profile: JavaProfile): Record<string, string> {
+  // Prints each outline as "name|x y|x y...", so the test can compare it with the TypeScript.
+  const field2d = (pkg: string, geometryPackage: string) => ({
+    [`${pkg.replaceAll('.', '/')}/Field2d.java`]: `package ${pkg};
+      public class Field2d {
+        public FieldObject2d getObject(String name) { return new FieldObject2d(name); }
+      }`,
+    [`${pkg.replaceAll('.', '/')}/FieldObject2d.java`]: `package ${pkg};
+      import ${geometryPackage}.Pose2d;
+      public class FieldObject2d {
+        private final String name;
+        FieldObject2d(String name) { this.name = name; }
+        public void setPoses(Pose2d... poses) {
+          StringBuilder b = new StringBuilder(name);
+          for (Pose2d pose : poses) b.append('|').append(pose.getX()).append(' ').append(pose.getY());
+          System.out.println(b);
+        }
+      }`,
+  });
   const geometry = (pkg: string) => ({
     [`${pkg.replaceAll('.', '/')}/Translation2d.java`]: `package ${pkg};
       public class Translation2d {
@@ -45,12 +64,20 @@ function stubs(profile: JavaProfile): Record<string, string> {
       public class Pose2d {
         private final Translation2d t;
         public Pose2d(Translation2d t) { this.t = t; }
+        public Pose2d(double x, double y, Rotation2d rotation) { this.t = new Translation2d(x, y); }
         public Translation2d getTranslation() { return t; }
+        public double getX() { return t.getX(); }
+        public double getY() { return t.getY(); }
+      }`,
+    [`${pkg.replaceAll('.', '/')}/Rotation2d.java`]: `package ${pkg};
+      public class Rotation2d {
+        public Rotation2d() {}
       }`,
   });
   if (profile.id === 'legacy') {
     return {
       ...geometry('edu.wpi.first.math.geometry'),
+      ...field2d('edu.wpi.first.wpilibj.smartdashboard', 'edu.wpi.first.math.geometry'),
       'edu/wpi/first/wpilibj/DriverStation.java': `package edu.wpi.first.wpilibj;
         import java.util.Optional;
         public class DriverStation {
@@ -62,6 +89,7 @@ function stubs(profile: JavaProfile): Record<string, string> {
   }
   return {
     ...geometry('org.wpilib.math.geometry'),
+    ...field2d('org.wpilib.smartdashboard', 'org.wpilib.math.geometry'),
     'org/wpilib/driverstation/Alliance.java': `package org.wpilib.driverstation;
       public enum Alliance { RED, BLUE }`,
     'org/wpilib/driverstation/MatchState.java': `package org.wpilib.driverstation;
@@ -106,6 +134,42 @@ function harness(project: RegionProject, profile: JavaProfile): string {
         System.out.print(b);
       }
     }`;
+}
+
+/** Builds a harness that publishes outlines for each alliance, with a line between them. */
+function outlineHarness(project: RegionProject, profile: JavaProfile): string {
+  const legacy = profile.id === 'legacy';
+  const pkg = legacy ? 'edu.wpi.first.wpilibj.smartdashboard' : 'org.wpilib.smartdashboard';
+  const set = (color: string) =>
+    legacy
+      ? `edu.wpi.first.wpilibj.DriverStation.current = java.util.Optional.of(edu.wpi.first.wpilibj.DriverStation.Alliance.${color});`
+      : `org.wpilib.driverstation.MatchState.current = java.util.Optional.of(org.wpilib.driverstation.Alliance.${color.toUpperCase()});`;
+  const publish = `${project.output.packageName}.${project.output.className}.publishTo(new ${pkg}.Field2d());`;
+  return `public class OutlineHarness {
+      public static void main(String[] args) {
+        ${set('Blue')}
+        ${publish}
+        System.out.println("---");
+        ${set('Red')}
+        ${publish}
+      }
+    }`;
+}
+
+/** The lines the outline harness should print for one alliance. */
+function expectedOutlines(project: RegionProject, red: boolean): string[] {
+  return project.regions.flatMap((region) =>
+    region.shapes.map((shape, shapeIndex) => {
+      const hole = shape.mode === 'subtract' ? ' (hole)' : '';
+      const outline = shapeOutline(shape);
+      const flip = red && region.allianceMode === 'alliance-relative';
+      const cells = [...outline, outline[0]!].map((p) => {
+        const point = flip ? flipPoint(p.x, p.y, project.field) : p;
+        return `${javaDouble(point.x)} ${javaDouble(point.y)}`;
+      });
+      return [`${toMethodName(region.name)} ${shapeIndex}${hole}`, ...cells].join('|');
+    }),
+  );
 }
 
 function shapeVertices(shape: Shape): Point[] {
@@ -190,6 +254,7 @@ describe.skipIf(!hasJdk)('generated Java matches the preview', () => {
       const sources = [
         writeSource(root, generatedPath, generateJava(project, profile)),
         writeSource(root, 'Harness.java', harness(project, profile)),
+        writeSource(root, 'OutlineHarness.java', outlineHarness(project, profile)),
         ...Object.entries(stubs(profile)).map(([path, source]) => writeSource(root, path, source)),
       ];
 
@@ -244,6 +309,16 @@ describe.skipIf(!hasJdk)('generated Java matches the preview', () => {
       expect(mismatches.slice(0, 10)).toEqual([]);
       // Guards against a test that passes only because nothing is ever inside.
       expect(insideCount).toBeGreaterThan(1000);
+
+      // Field2d outlines are closed, and flip the same way the checks do.
+      const outlines = spawnSync('java', ['-cp', 'classes', 'OutlineHarness'], {
+        cwd: root,
+        encoding: 'utf8',
+      });
+      expect(outlines.status, outlines.stderr).toBe(0);
+      const [blue, red] = outlines.stdout.trimEnd().split('---\n');
+      expect(blue!.trimEnd().split('\n')).toEqual(expectedOutlines(project, false));
+      expect(red!.trimEnd().split('\n')).toEqual(expectedOutlines(project, true));
     },
     60_000,
   );

@@ -45,6 +45,8 @@ The renderer will display data read from robot projects, such as region names an
 | --------------------- | --------------------------------------------------------------------- |
 | `app:get-info`        | Returns the app and Electron versions                                 |
 | `project:open`        | Shows a folder picker and makes the choice the current project        |
+| `project:close`       | Forgets the current project, leaving the disk unchanged               |
+| `project:save`        | Saves region data to `.regionbool/regions.json`                       |
 | `project:get-current` | Returns the current project                                           |
 | `export:preview`      | Generates code and compares it with the file on disk, without writing |
 | `export:write`        | Writes generated code, if the preview still holds                     |
@@ -72,13 +74,14 @@ Modules that don't import Electron can be tested directly with Vitest.
 
 - **The file isn't ours:** its first line isn't the RegionBool header.
 - **The file changed after the preview:** its hash differs from the one the user approved.
+- **`regions.json` can't be read:** nothing is written, so a broken file can't be replaced.
 - **The path leaves the project:** through `..`, an absolute path, or a symbolic link at any level.
 
 Writes go to a temporary file beside the target, then get renamed into place, so a crash can't leave a half-written file.
 
-## Planned data flow
+## Data flow
 
-This is the design for the finished app. Everything except the diff preview and `regions.json` saving exists. Those come in build step 5.
+Drawing on the canvas changes the region model, and everything else is derived from it.
 
 ```mermaid
 flowchart LR

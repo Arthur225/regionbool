@@ -1,7 +1,9 @@
 /** Root component: lays out the editor and handles keyboard shortcuts. */
 import { useEffect, useState } from 'react';
-import type { AppInfo, OpenProjectResult, ProjectInfo } from '../shared/ipc';
+import type { AppInfo } from '../shared/ipc';
+import { saveProject } from './actions';
 import { FieldCanvas } from './canvas/FieldCanvas';
+import { ExportDialog } from './dialogs/ExportDialog';
 import { PropertiesPanel } from './panels/PropertiesPanel';
 import { RegionPanel } from './panels/RegionPanel';
 import { Toolbar } from './panels/Toolbar';
@@ -25,6 +27,13 @@ function isTyping(target: EventTarget | null): boolean {
 }
 
 function handleKey(event: KeyboardEvent): void {
+  // A dialog blocks everything behind it.
+  if (document.querySelector('[role="dialog"]')) return;
+  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
+    event.preventDefault();
+    void saveProject();
+    return;
+  }
   // Text fields keep their own undo and shortcuts.
   if (isTyping(event.target)) return;
   const editor = useEditor.getState();
@@ -59,6 +68,7 @@ function StatusBar({ info }: { info: AppInfo | null }) {
   const cursor = useEditor((s) => s.cursor);
   const tool = useEditor((s) => s.tool);
   const draftCount = useEditor((s) => s.draftPoints.length);
+  const dirty = useEditor((s) => s.doc !== s.savedDoc);
 
   const hints: Partial<Record<Tool, string>> = {
     rect: 'Drag to draw a rectangle.',
@@ -74,6 +84,11 @@ function StatusBar({ info }: { info: AppInfo | null }) {
         {cursor ? `x ${cursor.x.toFixed(2)} m, y ${cursor.y.toFixed(2)} m` : 'Off the field map'}
       </span>
       <span className="status-hint">{hints[tool] ?? ''}</span>
+      {dirty && (
+        <span className="dirty-state" data-testid="unsaved">
+          Unsaved changes
+        </span>
+      )}
       {info && <span data-testid="app-version">Version {info.version}</span>}
     </footer>
   );
@@ -81,40 +96,39 @@ function StatusBar({ info }: { info: AppInfo | null }) {
 
 export function App() {
   const [info, setInfo] = useState<AppInfo | null>(null);
-  const [project, setProject] = useState<ProjectInfo | null>(null);
-  const [problem, setProblem] = useState<Extract<OpenProjectResult, { status: 'invalid' }> | null>(
-    null,
-  );
+  const [exporting, setExporting] = useState(false);
+  const notice = useEditor((s) => s.notice);
+  const dirty = useEditor((s) => s.doc !== s.savedDoc);
+  const projectName = useEditor((s) => s.project?.name);
 
   useEffect(() => {
     void window.regionbool.getAppInfo().then(setInfo);
+    // A reloaded page starts empty, so the main process must not keep a project it would save over.
+    void window.regionbool.closeProject();
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, []);
 
-  function onProjectResult(result: OpenProjectResult) {
-    if (result.status === 'opened') {
-      setProject(result.project);
-      setProblem(null);
-    } else if (result.status === 'invalid') {
-      setProblem(result);
-    }
-  }
+  // Closing with unsaved changes makes the main process ask first.
+  useEffect(() => {
+    window.onbeforeunload = dirty ? () => true : null;
+    document.title = `${dirty ? '• ' : ''}${projectName ? `${projectName} - ` : ''}RegionBool`;
+  }, [dirty, projectName]);
 
   return (
     <div className="app">
-      <Toolbar onProjectResult={onProjectResult} />
-      {problem && (
-        <div className="banner" role="alert" data-testid="project-error">
+      <Toolbar onExport={() => setExporting(true)} />
+      {notice && (
+        <div className={`banner ${notice.kind}`} role="alert" data-testid="project-error">
           <div>
-            <strong>That folder isn&apos;t a WPILib Java project.</strong>
+            <strong>{notice.title}</strong>
             <ul>
-              {problem.reasons.map((reason) => (
-                <li key={reason}>{reason}</li>
+              {notice.details.map((detail) => (
+                <li key={detail}>{detail}</li>
               ))}
             </ul>
           </div>
-          <button type="button" onClick={() => setProblem(null)}>
+          <button type="button" onClick={() => useEditor.getState().setNotice(null)}>
             Dismiss
           </button>
         </div>
@@ -124,9 +138,10 @@ export function App() {
         <main className="canvas-area">
           <FieldCanvas />
         </main>
-        <PropertiesPanel project={project} />
+        <PropertiesPanel />
       </div>
       <StatusBar info={info} />
+      {exporting && <ExportDialog onClose={() => setExporting(false)} />}
     </div>
   );
 }

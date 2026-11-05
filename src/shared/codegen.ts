@@ -10,6 +10,7 @@
 import { EDGE_TOLERANCE_METERS, rectRotation } from './geometry';
 import type { JavaProfile } from './javaProfiles';
 import { toMethodName, validateProject } from './model';
+import { shapeOutline } from './shapeOps';
 import type { Region, RegionProject, Shape, ValidationIssue } from './model';
 
 /**
@@ -153,6 +154,48 @@ const IN_POLYGON = `  private static boolean inPolygon(double x, double y, doubl
     return inside;
   }`;
 
+function field2dMethods(project: RegionProject, usesAlliance: boolean): string {
+  const d = javaDouble;
+  const array = (values: number[]) => `new double[] {${values.map(d).join(', ')}}`;
+  const calls = project.regions.flatMap((region) =>
+    region.shapes.map((shape, shapeIndex) => {
+      const hole = shape.mode === 'subtract' ? ' (hole)' : '';
+      const name = `"${toMethodName(region.name)} ${shapeIndex}${hole}"`;
+      const outline = shapeOutline(shape);
+      const flip = usesAlliance
+        ? region.allianceMode === 'alliance-relative'
+          ? 'red, '
+          : 'false, '
+        : '';
+      return `    publishOutline(field, ${name}, ${flip}${array(outline.map((p) => p.x))}, ${array(outline.map((p) => p.y))});`;
+    }),
+  );
+  const flipY =
+    project.field.symmetry === 'rotational' ? '\n        y = FIELD_WIDTH_METERS - y;' : '';
+  const flipBlock = usesAlliance
+    ? `\n      if (flip) {\n        x = FIELD_LENGTH_METERS - x;${flipY}\n      }`
+    : '';
+  return `  /**
+   * Draws every region on a Field2d, so it shows in AdvantageScope, Glass or Elastic. Each shape
+   * becomes one object, and circles are approximated. This allocates, so call it at startup or when
+   * the alliance changes, not every loop. Shapes that flip use the alliance at the time of the call.
+   */
+  public static void publishTo(Field2d field) {${usesAlliance ? '\n    boolean red = isRedAlliance();' : ''}
+${calls.join('\n')}
+  }
+
+  private static void publishOutline(
+      Field2d field, String name, ${usesAlliance ? 'boolean flip, ' : ''}double[] xs, double[] ys) {
+    Pose2d[] poses = new Pose2d[xs.length + 1];
+    for (int i = 0; i < poses.length; i++) {
+      double x = xs[i % xs.length];
+      double y = ys[i % ys.length];${flipBlock}
+      poses[i] = new Pose2d(x, y, new Rotation2d());
+    }
+    field.getObject(name).setPoses(poses);
+  }`;
+}
+
 /**
  * Generates the Java source for a project, using the imports and calls of the given WPILib profile.
  *
@@ -167,7 +210,11 @@ export function generateJava(project: RegionProject, profile: JavaProfile): stri
   const usesAlliance = regions.some((region) => region.allianceMode === 'alliance-relative');
   const usesRotationalFlip = usesAlliance && field.symmetry === 'rotational';
 
-  const imports = [...profile.geometryImports, ...(usesAlliance ? profile.allianceImports : [])]
+  const imports = [
+    ...profile.geometryImports,
+    ...profile.field2dImports,
+    ...(usesAlliance ? profile.allianceImports : []),
+  ]
     .sort()
     .map((name) => `import ${name};`);
 
@@ -211,6 +258,7 @@ export function generateJava(project: RegionProject, profile: JavaProfile): stri
     constants.join('\n'),
     `  private ${output.className}() {}`,
     ...regions.map((region, index) => regionMethods(project, region, index)),
+    field2dMethods(project, usesAlliance),
     ...helpers,
   ];
 

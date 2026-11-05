@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { previewExport, writeExport } from '../../src/main/export';
+import { readRegionsFile, REGIONS_FILE } from '../../src/main/regionsFile';
 import { GENERATED_HEADER, generateJava } from '../../src/shared/codegen';
 import { JAVA_PROFILES } from '../../src/shared/javaProfiles';
 import { createRobotProject, removeCreatedFolders } from './fixtures/robotProject';
@@ -122,5 +123,61 @@ describe('writeExport', () => {
     const withFile = createRobotProject({ [TARGET]: made });
     expect((await writeExport(withFile, sampleProject(), 'legacy', null)).ok).toBe(false);
     expect(readFileSync(join(withFile, TARGET), 'utf8')).toBe(made);
+  });
+});
+
+describe('hand-edit detection', () => {
+  async function exported() {
+    const root = createRobotProject();
+    await writeExport(root, sampleProject(), 'legacy', null);
+    return root;
+  }
+
+  it('records a hash of what it wrote', async () => {
+    const root = await exported();
+    const disk = await readRegionsFile(root);
+    expect(disk.status === 'loaded' && disk.generatedHash).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it('does not flag a file left as generated, even when regions changed', async () => {
+    const root = await exported();
+    const changed = sampleProject();
+    changed.regions[0]!.name = 'New name';
+    const preview = await previewExport(root, changed, 'legacy');
+    expect(preview).toMatchObject({ ok: true, status: 'update', handEdited: false });
+  });
+
+  it('flags a generated file that was edited, keeping its header', async () => {
+    const root = await exported();
+    writeFileSync(join(root, TARGET), `${GENERATED_HEADER}\n// my edit\n`);
+    const preview = await previewExport(root, sampleProject(), 'legacy');
+    expect(preview).toMatchObject({ ok: true, status: 'update', handEdited: true });
+  });
+
+  it('stops flagging once the edited file is replaced', async () => {
+    const root = await exported();
+    writeFileSync(join(root, TARGET), `${GENERATED_HEADER}\n// my edit\n`);
+    const first = await previewExport(root, sampleProject(), 'legacy');
+    await writeExport(root, sampleProject(), 'legacy', first.ok ? first.existingHash : '');
+    const changed = sampleProject();
+    changed.regions[0]!.name = 'New name';
+    expect(await previewExport(root, changed, 'legacy')).toMatchObject({ handEdited: false });
+  });
+
+  it('ignores a hash sent by the renderer', async () => {
+    const root = await exported();
+    const disk = await readRegionsFile(root);
+    const realHash = disk.status === 'loaded' ? disk.generatedHash : null;
+    await writeExport(root, { ...sampleProject(), generatedHash: 'fake' }, 'legacy', realHash);
+    const after = await readRegionsFile(root);
+    expect(after.status === 'loaded' && after.generatedHash).toBe(realHash);
+  });
+
+  it('refuses to write anything when regions.json is unreadable', async () => {
+    const root = createRobotProject({ [REGIONS_FILE]: '{ broken' });
+    const result = await writeExport(root, sampleProject(), 'legacy', null);
+    expect(result.ok).toBe(false);
+    expect(existsSync(join(root, TARGET))).toBe(false);
+    expect(readFileSync(join(root, REGIONS_FILE), 'utf8')).toBe('{ broken');
   });
 });

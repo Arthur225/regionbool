@@ -90,6 +90,32 @@ describe('generateJava', () => {
     expect(java).toContain('inCircle');
   });
 
+  it("includes a closed-path Field2d helper using each profile's imports", () => {
+    const legacyJava = generateJava(sampleProject(), legacy);
+    expect(legacyJava).toContain('import edu.wpi.first.wpilibj.smartdashboard.Field2d;');
+    expect(legacyJava).toContain('public static void publishTo(Field2d field)');
+    expect(legacyJava).toContain('new Pose2d[xs.length + 1]');
+    expect(legacyJava).toContain('"isInAreaDoCentro 1 (hole)", false,');
+    expect(legacyJava).toContain('"isInScoringZone 0", red,');
+    expect(generateJava(sampleProject(), modern)).toContain(
+      'import org.wpilib.smartdashboard.Field2d;',
+    );
+  });
+
+  it('leaves alliance code out of the helper when no region flips', () => {
+    const project = sampleProject();
+    project.regions = project.regions.map((region) => ({ ...region, allianceMode: 'fixed' }));
+    const java = generateJava(project, legacy);
+    expect(java).not.toContain('boolean red');
+    expect(java).not.toContain('boolean flip');
+  });
+
+  it('generates a usable class with no regions', () => {
+    const project = sampleProject();
+    project.regions = [];
+    expect(generateJava(project, legacy)).toContain('public static void publishTo(Field2d field)');
+  });
+
   it('refuses invalid projects', () => {
     const project: RegionProject = sampleProject();
     project.output.packageName = 'frc;System.exit(1);';
