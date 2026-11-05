@@ -14,7 +14,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { delimiter, join, sep } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { generateJava } from '../../src/shared/codegen';
 import { JAVA_PROFILES, type JavaProfile } from '../../src/shared/javaProfiles';
@@ -37,7 +37,7 @@ function classpathFor(groupPrefix: string, version: string): string[] {
   return readdirSync(GRADLE_CACHE)
     .filter((group) => group.startsWith(groupPrefix))
     .flatMap((group) => findJars(join(GRADLE_CACHE, group)))
-    .filter((jar) => jar.includes(`/${version}/`) && /-java-/.test(jar));
+    .filter((jar) => jar.includes(`${sep}${version}${sep}`) && /-java-/.test(jar));
 }
 
 function latestVersion(groupPath: string, pattern: RegExp): string | null {
@@ -78,7 +78,7 @@ function compile(
     '-d',
     'classes',
     '-cp',
-    classpath.join(':'),
+    classpath.join(delimiter),
     file,
   ];
   return spawnSync('javac', args, {

@@ -2,20 +2,22 @@
 
 RegionBool is an Electron desktop app for FRC programmers. You draw regions on a field map using rectangles, circles, triangles and polygons, and the app generates a Java class in a WPILib robot project with one boolean method per region, answering "is this position inside the region?".
 
-**Current state:** build step 6 of 7. The app works end to end with real field images for 2022 to 2026 and custom image import. There are no installers yet (step 7). **Bundled image licenses are unconfirmed, which blocks any public release.**
+**Current state:** all 7 build steps are done, and the repository is private. **Public release is blocked** on confirming the bundled image licenses and choosing a project license (see "Releases" in `CONTRIBUTING.md`).
 
 ## Commands
 
-| Command            | What it does                                        |
-| ------------------ | --------------------------------------------------- |
-| `npm install`      | Installs dependencies (Node 22.12 or newer)         |
-| `npm run dev`      | Runs the app with hot reload                        |
-| `npm run check`    | Runs formatting, lint, type and unit test checks    |
-| `npm test`         | Runs unit tests only                                |
-| `npm run test:e2e` | Builds the app and runs Playwright against Electron |
-| `npm run format`   | Rewrites files with Prettier                        |
+| Command                 | What it does                                        |
+| ----------------------- | --------------------------------------------------- |
+| `npm install`           | Installs dependencies (Node 22.12 or newer)         |
+| `npm run dev`           | Runs the app with hot reload                        |
+| `npm run check`         | Runs formatting, lint, type and unit test checks    |
+| `npm test`              | Runs unit tests only                                |
+| `npm run test:e2e`      | Builds the app and runs Playwright against Electron |
+| `npm run test:packaged` | Builds the packaged app and tests it                |
+| `npm run dist`          | Builds installers for this system into `release/`   |
+| `npm run format`        | Rewrites files with Prettier                        |
 
-Run `npm run check` and `npm run test:e2e` before opening a pull request.
+Run `npm run check` and `npm run test:e2e` before opening a pull request, plus `npm run test:packaged` if you changed packaging, resources or dependencies.
 
 ## Repository map
 
@@ -53,6 +55,9 @@ Every path in this table must exist. `tests/unit/docs.test.ts` fails if one does
 | `src/renderer/main.tsx`                      | Renderer entry point                                                      |
 | `resources/fields/`                          | Bundled field definitions and images, with sources in `SOURCES.md`        |
 | `tests/unit/`                                | Vitest tests                                                              |
+| `tests/packaged/`                            | Tests that run against the packaged app                                   |
+| `electron-builder.yml`                       | Packaging settings                                                        |
+| `.github/workflows/release.yml`              | Tests and builds on all systems, and creates draft releases               |
 | `tests/e2e/`                                 | Playwright tests that launch the real Electron app                        |
 | `docs/architecture.md`                       | Processes, security model and data flow                                   |
 | `docs/data-model.md`                         | Regions, coordinates, the rules for "inside", file format                 |
@@ -97,13 +102,15 @@ Each step is one branch and one pull request. The full reasoning is in `docs/dec
 | 4    | Canvas, drawing tools, region panel, undo, point tester | Done   |
 | 5    | Export with diff, save and load, Field2d helper         | Done   |
 | 6    | Bundled fields and custom field import                  | Done   |
-| 7    | Packaging, release workflow, user README                | To do  |
+| 7    | Packaging, release workflow, user README                | Done   |
 
 ## Common changes
 
 **Add an IPC call:** declare the channel and types in `src/shared/ipc.ts`, add the method to `RegionBoolApi`, implement it in `src/preload/index.ts`, register the handler in `src/main/ipc.ts`, and update the expected key list in `tests/e2e/app.spec.ts`. That test exists so any growth in what the renderer can reach is a deliberate change. Validate arguments in the handler, because the main process shouldn't trust renderer input, and keep logic in a module that doesn't import Electron so it can be unit tested. Update the table in `docs/architecture.md`.
 
 **Change canvas behavior:** read `docs/editor.md` first. Put shape math in `src/shared/shapeOps.ts`, where it can be unit tested, and add an end-to-end case in `tests/e2e/canvas.spec.ts`.
+
+**Add a run-time dependency of the main process:** put it in `dependencies`, not `devDependencies`, and run `npm run test:packaged`. Libraries the renderer uses are bundled, so they stay dev dependencies.
 
 **Add a season's field:** follow `docs/fields.md`, including checking the image's orientation by eye.
 

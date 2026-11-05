@@ -1,6 +1,6 @@
 /** Choosing a field, and importing your own image. */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { expect, test, type ElectronApplication, type Page } from '@playwright/test';
 import {
   chooseFolderInDialog,
@@ -40,7 +40,7 @@ const numberValue = (testId: string) => page.getByTestId(testId).inputValue();
 async function openProject(root: string): Promise<void> {
   await chooseFolderInDialog(app, root);
   await page.getByRole('button', { name: 'Open robot project' }).click();
-  await expect(page.getByTestId('project-details')).toContainText(root.split('/').at(-1)!);
+  await expect(page.getByTestId('project-details')).toContainText(basename(root));
 }
 
 async function pickImage(path: string): Promise<void> {

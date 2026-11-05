@@ -13,6 +13,7 @@
     "schemas/*.json",
     "electron.vite.config.ts",
     "vitest.config.mts",
-    "playwright.config.ts"
+    "playwright.config.ts",
+    "playwright.packaged.config.ts"
   ]
 }

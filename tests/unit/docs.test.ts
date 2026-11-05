@@ -19,6 +19,17 @@ describe('documentation stays in sync with the repository', () => {
     expect(missing).toEqual([]);
   });
 
+  it.each(['README.md', 'CONTRIBUTING.md', 'AGENTS.md'])(
+    'has working relative links in %s',
+    (file) => {
+      const links = [...read(file).matchAll(/\]\((?!https?:|#)([^)#]+)/g)].map(
+        (match) => match[1] ?? '',
+      );
+      const missing = links.filter((link) => !existsSync(join(root, link)));
+      expect(missing).toEqual([]);
+    },
+  );
+
   it('lists every decision record in the decisions index', () => {
     const index = read('docs/decisions/README.md');
     const records = readdirSync(join(root, 'docs/decisions')).filter((f) =>
