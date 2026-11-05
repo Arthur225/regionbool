@@ -12,4 +12,4 @@ FRC programmers use all three systems, and many teams use Windows.
 
 ## Consequences
 
-Users will see an OS warning until builds are signed. The repository stays private until image licenses are cleared and the owner chooses to make it public, and no open-source license has been chosen yet. macOS builds are ad-hoc signed, because Apple Silicon won't run anything unsigned, which doesn't satisfy Gatekeeper. The README explains the workaround.
+Users will see an OS warning until builds are signed. The repository has been public since 2026-11-04. Image licenses aren't cleared, and no open-source license has been chosen yet, so installers haven't been released. macOS builds are ad-hoc signed, because Apple Silicon won't run anything unsigned, which doesn't satisfy Gatekeeper. The README explains the workaround.

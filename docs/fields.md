@@ -61,4 +61,4 @@ WPILib field coordinates put blue at x = 0, which the canvas draws on the left. 
 
 ## Image licenses
 
-[`resources/fields/SOURCES.md`](../resources/fields/SOURCES.md) records each image's source. **Their license is unconfirmed, and this must be resolved before any public release** (see decision 0014). A test keeps that warning in place, so removing it has to be deliberate.
+[`resources/fields/SOURCES.md`](../resources/fields/SOURCES.md) records each image's source. **Their license is unconfirmed, and this must be resolved before publishing installers** (see decision 0014). A test keeps that warning in place, so removing it has to be deliberate.

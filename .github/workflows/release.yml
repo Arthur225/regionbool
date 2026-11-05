@@ -3,8 +3,7 @@
 # - A pull request that changes packaging runs this as a check, and publishes nothing.
 # - Pushing a tag like v1.0.0 also creates a DRAFT release, which a person has to publish.
 #
-# This repository is private, so these runs use GitHub Actions minutes, and macOS minutes count ten
-# times. That's why it doesn't run on every pull request.
+# It takes a while on three systems, which is why it doesn't run on every pull request.
 name: Release
 
 on:

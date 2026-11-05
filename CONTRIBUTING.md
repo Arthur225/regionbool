@@ -41,11 +41,10 @@ This builds the app into `release/` for your system and tests the packaged resul
 
 ## Releases
 
-**Before the first public release,** resolve the blockers:
+**Before publishing the first installers,** resolve the blockers:
 
 - Confirm the licenses of the bundled field images, or remove them. See `resources/fields/SOURCES.md`.
 - Choose a license for this project, and update `package.json` and the README.
-- Make the repository public, because the README's download links won't work for others until then.
 
 To release:
 
@@ -60,6 +59,6 @@ To release:
 3. The workflow tests and builds on each system, then creates a **draft** release.
 4. Try the installers, then publish the draft by hand.
 
-The same workflow also runs as a check on pull requests that change packaging, and it publishes nothing in that case. It doesn't run on every pull request, because macOS Actions minutes are expensive in a private repository.
+The same workflow also runs as a check on pull requests that change packaging, and it publishes nothing in that case. It doesn't run on every pull request, because it takes a while on three systems.
 
 Builds are ad-hoc signed on macOS and unsigned on Windows. Signing needs paid certificates, which would be added to `electron-builder.yml` and the workflow as secrets.
