@@ -46,3 +46,24 @@ body {
   margin: 4px 0;
   color: var(--muted);
 }
+
+.placeholder button {
+  margin-top: 16px;
+  padding: 8px 16px;
+  font: inherit;
+}
+
+.placeholder dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 16px;
+  margin-top: 20px;
+}
+
+.placeholder dt {
+  color: var(--muted);
+}
+
+.placeholder dd {
+  margin: 0;
+}
