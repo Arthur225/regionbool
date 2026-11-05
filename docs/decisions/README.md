@@ -13,3 +13,4 @@ Short notes on why the project is built the way it is. Add a new numbered file f
 - [0009: Use one branch and pull request per build step](0009-git-workflow.md)
 - [0010: Keep the repo self-explanatory for agents and developers](0010-agent-friendly-docs.md)
 - [0011: Use electron-vite, React and SVG](0011-stack.md)
+- [0012: Keep paths and code out of the renderer](0012-renderer-sends-data-only.md)

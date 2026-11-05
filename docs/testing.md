@@ -1,15 +1,15 @@
 # Testing
 
-| Layer            | Files                                | What it proves                                                         | Needs       |
-| ---------------- | ------------------------------------ | ---------------------------------------------------------------------- | ----------- |
-| Geometry         | `tests/unit/geometry.test.ts`        | Edges, rotation, concave polygons, holes and flips behave as specified | Node        |
-| Model            | `tests/unit/model.test.ts`           | Name conversion and validation rules                                   | Node        |
-| Schema           | `tests/unit/schema.test.ts`          | The schema accepts saved projects and rejects corrupted ones           | Node        |
-| Codegen          | `tests/unit/codegen.test.ts`         | Output content, snapshots for each profile, injection safety           | Node        |
-| Java cross-check | `tests/unit/java-crosscheck.test.ts` | Compiled Java and `geometry.ts` agree on every point                   | A JDK       |
-| Real WPILib      | `tests/unit/java-wpilib.test.ts`     | Generated code compiles against real WPILib jars                       | Cached jars |
-| Docs             | `tests/unit/docs.test.ts`            | The `AGENTS.md` map and decisions index aren't stale                   | Node        |
-| End to end       | `tests/e2e/`                         | The real app launches, with its security settings applied              | Built app   |
+| Layer            | Files                                | What it proves                                                                   | Needs       |
+| ---------------- | ------------------------------------ | -------------------------------------------------------------------------------- | ----------- |
+| Geometry         | `tests/unit/geometry.test.ts`        | Edges, rotation, concave polygons, holes and flips behave as specified           | Node        |
+| Model            | `tests/unit/model.test.ts`           | Name conversion and validation rules                                             | Node        |
+| Schema           | `tests/unit/schema.test.ts`          | The schema accepts saved projects and rejects corrupted ones                     | Node        |
+| Codegen          | `tests/unit/codegen.test.ts`         | Output content, snapshots for each profile, injection safety                     | Node        |
+| Java cross-check | `tests/unit/java-crosscheck.test.ts` | Compiled Java and `geometry.ts` agree on every point                             | A JDK       |
+| Real WPILib      | `tests/unit/java-wpilib.test.ts`     | Generated code compiles against real WPILib jars                                 | Cached jars |
+| Docs             | `tests/unit/docs.test.ts`            | The `AGENTS.md` map and decisions index aren't stale                             | Node        |
+| End to end       | `tests/e2e/`                         | The real app launches securely, opens projects, and the export flow reaches disk | Built app   |
 
 `npm run check` runs everything except the end-to-end tests, and `npm run test:e2e` runs those.
 
@@ -35,3 +35,5 @@ These tests skip rather than fail when their requirements are missing, so **a sk
 ## Manual checks
 
 `modern` real compile needs JDK 25. To run it, put a JDK 25 `javac` on your `PATH`, have a built alpha-6 project in the Gradle cache, and run `npm test`. Confirm the test shows as passed rather than skipped.
+
+End-to-end tests replace `dialog.showOpenDialog` because a native dialog can't be driven by a test, so the real dialog is only exercised by hand.

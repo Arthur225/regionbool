@@ -41,13 +41,44 @@ The renderer will display data read from robot projects, such as region names an
 
 `src/shared/ipc.ts` is the complete list of what the renderer can ask the main process to do.
 
-| Channel        | Purpose                               |
-| -------------- | ------------------------------------- |
-| `app:get-info` | Returns the app and Electron versions |
+| Channel               | Purpose                                                               |
+| --------------------- | --------------------------------------------------------------------- |
+| `app:get-info`        | Returns the app and Electron versions                                 |
+| `project:open`        | Shows a folder picker and makes the choice the current project        |
+| `project:get-current` | Returns the current project                                           |
+| `export:preview`      | Generates code and compares it with the file on disk, without writing |
+| `export:write`        | Writes generated code, if the preview still holds                     |
+| `fields:list`         | Lists bundled fields and the current project's fields                 |
+| `fields:get-image`    | Returns a field's image as a data URL                                 |
+
+The renderer never sends a path or file contents. It can't name a folder, only ask the user to pick one, and it sends region data rather than code, which the main process checks and generates from. So even a compromised renderer can only write generated Java to the project the user chose.
+
+## Main process modules
+
+| Module       | Responsibility                                                     | Imports Electron |
+| ------------ | ------------------------------------------------------------------ | ---------------- |
+| `index.ts`   | Window and app lifecycle                                           | Yes              |
+| `ipc.ts`     | Channel handlers, and holds the current project                    | Yes              |
+| `project.ts` | Recognizes WPILib Java projects and detects the import profile     | No               |
+| `export.ts`  | Validates region data, generates code, applies the overwrite rules | No               |
+| `writer.ts`  | Atomic writes that can't leave the project                         | No               |
+| `fields.ts`  | Loads field definitions and images                                 | No               |
+
+Modules that don't import Electron can be tested directly with Vitest.
+
+## Writing files safely
+
+`export:write` refuses in these cases, and each has a test:
+
+- **The file isn't ours:** its first line isn't the RegionBool header.
+- **The file changed after the preview:** its hash differs from the one the user approved.
+- **The path leaves the project:** through `..`, an absolute path, or a symbolic link at any level.
+
+Writes go to a temporary file beside the target, then get renamed into place, so a crash can't leave a half-written file.
 
 ## Planned data flow
 
-This is the design for the finished app. The model, `geometry.ts` and `codegen.ts` exist, and the rest comes in later build steps.
+This is the design for the finished app. Everything except the canvas, diff preview and `regions.json` saving exists. Those come in build steps 4 and 5.
 
 ```mermaid
 flowchart LR

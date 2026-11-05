@@ -1,7 +1,7 @@
 /** Main process entry point: creates the window and applies the app's security settings. */
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, shell } from 'electron';
 import { join } from 'node:path';
-import { IpcChannel, type AppInfo } from '../shared/ipc';
+import { registerIpcHandlers } from './ipc';
 
 function createWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -40,13 +40,6 @@ function createWindow(): BrowserWindow {
     void window.loadFile(join(__dirname, '../renderer/index.html'));
   }
   return window;
-}
-
-function registerIpcHandlers(): void {
-  ipcMain.handle(IpcChannel.GetAppInfo, (): AppInfo => ({
-    version: app.getVersion(),
-    electronVersion: process.versions.electron,
-  }));
 }
 
 void app.whenReady().then(() => {
