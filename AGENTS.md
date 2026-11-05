@@ -2,7 +2,7 @@
 
 RegionBool is an Electron desktop app for FRC programmers. You draw regions on a field map using rectangles, circles, triangles and polygons, and the app generates a Java class in a WPILib robot project with one boolean method per region, answering "is this position inside the region?".
 
-**Current state:** build step 2 of 7. The core logic in `src/shared` (region model, point-in-region math, Java generation) is done and tested, but it isn't connected to any UI yet, so the app still opens a placeholder window. See [Build status](#build-status).
+**Current state:** build step 3 of 7. Core logic and the main process are done and tested: the app can open a robot project, detect its WPILib version, and safely write generated code. There's no field canvas yet, so regions can't be drawn, and the window only has an open-project button.
 
 ## Commands
 
@@ -25,22 +25,30 @@ Every path in this table must exist. `tests/unit/docs.test.ts` fails if one does
 
 | Path                          | Purpose                                                         |
 | ----------------------------- | --------------------------------------------------------------- |
-| `src/main/index.ts`           | Main process entry: window creation, security, IPC handlers     |
+| `src/main/index.ts`           | Main process entry: window creation and security                |
+| `src/main/ipc.ts`             | IPC handlers, and holds the current project                     |
+| `src/main/project.ts`         | Recognizes WPILib Java projects, detects the import profile     |
+| `src/main/export.ts`          | Validates region data, generates code, applies overwrite rules  |
+| `src/main/writer.ts`          | Atomic writes that can't leave the project                      |
+| `src/main/fields.ts`          | Loads field definitions and images                              |
 | `src/preload/index.ts`        | Bridge that exposes `window.regionbool` to the renderer         |
 | `src/preload/api.d.ts`        | Type declaration for `window.regionbool`                        |
 | `src/shared/ipc.ts`           | IPC channel names and types, the full renderer-to-main contract |
 | `src/shared/model.ts`         | Region types and validation                                     |
 | `src/shared/geometry.ts`      | Point-in-region math used by the preview                        |
 | `src/shared/javaProfiles.ts`  | What generated code needs for each WPILib version               |
+| `src/shared/fields.ts`        | Field definition format and parser                              |
 | `src/shared/codegen.ts`       | Generates the Java class                                        |
 | `schemas/regions.schema.json` | JSON Schema for `.regionbool/regions.json`                      |
 | `src/renderer/App.tsx`        | Root React component                                            |
 | `src/renderer/main.tsx`       | Renderer entry point                                            |
+| `resources/fields/`           | Fields bundled with the app, empty until build step 6           |
 | `tests/unit/`                 | Vitest tests                                                    |
 | `tests/e2e/`                  | Playwright tests that launch the real Electron app              |
 | `docs/architecture.md`        | Processes, security model and data flow                         |
 | `docs/data-model.md`          | Regions, coordinates, the rules for "inside", file format       |
 | `docs/codegen.md`             | Generated class layout, import profiles, how to add a profile   |
+| `docs/fields.md`              | Field file format, symmetry, image licenses                     |
 | `docs/testing.md`             | Test layers, what each proves, what skips mean                  |
 | `docs/decisions/`             | Why the project is built the way it is                          |
 | `CONTRIBUTING.md`             | Branch, pull request and test expectations                      |
@@ -62,9 +70,8 @@ Breaking one of these is a bug even if the tests pass. Rules marked (lint) are e
 8. **Text from project files never reaches generated code unvalidated.** See `docs/codegen.md`.
 9. **Check WPILib APIs against the real jars or sources, not memory.** They differ between alphas.
 
-This applies once the writer exists (build step 3):
-
 10. **Writes stay inside the selected project,** and the app never overwrites a file without the RegionBool header.
+11. **The renderer never sends paths or file contents.** The main process picks the project through a dialog and generates code itself.
 
 ## Build status
 
@@ -74,17 +81,17 @@ Each step is one branch and one pull request. The full reasoning is in `docs/dec
 | ---- | ------------------------------------------------------- | ------ |
 | 1    | Electron scaffold, security settings, tooling, docs     | Done   |
 | 2    | Data model, geometry, codegen, import profiles          | Done   |
-| 3    | Project detection, safe writer, field loading, IPC      | To do  |
+| 3    | Project detection, safe writer, field loading, IPC      | Done   |
 | 4    | Canvas, drawing tools, region panel, undo, point tester | To do  |
 | 5    | Export with diff, save and load, Field2d helper         | To do  |
 | 6    | Bundled fields and custom field import                  | To do  |
 | 7    | Packaging, release workflow, user README                | To do  |
 
-Paths planned for later steps, not yet present: `src/main/{project,writer,fields,ipc}.ts`, `src/renderer/{store.ts,canvas/,panels/,dialogs/}`, `resources/fields/`, and `docs/fields.md`.
+Paths planned for later steps, not yet present: `src/renderer/{store.ts,canvas/,panels/,dialogs/}`.
 
 ## Common changes
 
-**Add an IPC call:** declare the channel and types in `src/shared/ipc.ts`, add the method to `RegionBoolApi`, implement it in `src/preload/index.ts`, register the handler in the main process, and update the expected key list in `tests/e2e/app.spec.ts`. That test exists so any growth in what the renderer can reach is a deliberate change. Validate arguments in the handler, because the main process shouldn't trust renderer input.
+**Add an IPC call:** declare the channel and types in `src/shared/ipc.ts`, add the method to `RegionBoolApi`, implement it in `src/preload/index.ts`, register the handler in `src/main/ipc.ts`, and update the expected key list in `tests/e2e/app.spec.ts`. That test exists so any growth in what the renderer can reach is a deliberate change. Validate arguments in the handler, because the main process shouldn't trust renderer input, and keep logic in a module that doesn't import Electron so it can be unit tested. Update the table in `docs/architecture.md`.
 
 **Change generated Java:** edit `src/shared/codegen.ts`, and `geometry.ts` too if the math changes. Run `npm test`, then review the snapshot diff before accepting it with `npx vitest run -u`.
 
