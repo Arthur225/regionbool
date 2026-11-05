@@ -1,0 +1,11 @@
+{
+  "game": "2024 Crescendo",
+  "field-image": "2024-crescendo.png",
+  "field-corners": {
+    "top-left": [151, 80],
+    "bottom-right": [2962, 1477]
+  },
+  "field-size": [16.541, 8.211],
+  "symmetry": "mirrored",
+  "image-rotated": true
+}

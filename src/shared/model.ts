@@ -96,6 +96,8 @@ export interface FieldInfo {
   /** Size along y, in meters. */
   widthMeters: number;
   symmetry: FieldSymmetry;
+  /** The field definition in use, if any. Missing means a blank grid at a custom size. */
+  fieldId?: string;
 }
 
 /** Where the generated class goes. */

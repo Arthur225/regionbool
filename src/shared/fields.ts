@@ -20,6 +20,11 @@ export interface FieldDefinition {
   symmetry: FieldSymmetry | null;
   /** The image file's name, with any folders removed. */
   imageFile: string;
+  /**
+   * True if the image shows red on the left, so it has to be turned 180 degrees to match field
+   * coordinates, which put blue at x = 0. Field images don't agree on this, so check each one.
+   */
+  imageRotated: boolean;
   /** Pixel position of the field's top-left corner in the image, `[x, y]`. */
   topLeftPixel: [number, number];
   /** Pixel position of the field's bottom-right corner in the image, `[x, y]`. */
@@ -81,6 +86,7 @@ export function parseFieldDefinition(id: string, json: unknown): FieldDefinition
     widthMeters: width,
     symmetry: symmetry ?? null,
     imageFile,
+    imageRotated: data['image-rotated'] === true,
     topLeftPixel: topLeft,
     bottomRightPixel: bottomRight,
   };

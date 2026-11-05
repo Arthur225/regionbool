@@ -1,7 +1,15 @@
-import { writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { getFieldImage, listFields } from '../../src/main/fields';
+import {
+  getFieldImage,
+  listFields,
+  PROJECT_FIELDS_DIR,
+  readPickedImage,
+  saveCustomField,
+  toFieldId,
+  type PickedImage,
+} from '../../src/main/fields';
 import { isFieldId, parseFieldDefinition } from '../../src/shared/fields';
 import { createFolder, removeCreatedFolders } from './fixtures/robotProject';
 
@@ -25,6 +33,7 @@ describe('parseFieldDefinition', () => {
       widthMeters: 8.052,
       symmetry: null,
       imageFile: '2025-field.png',
+      imageRotated: false,
       topLeftPixel: [421, 91],
       bottomRightPixel: [3352, 1437],
     });
@@ -109,6 +118,97 @@ describe('field folders', () => {
     const dir = createFolder({ 'f.json': definition('missing.png') });
     await expect(getFieldImage([dir], 'nope')).resolves.toBeNull();
     await expect(getFieldImage([dir], '../f')).resolves.toBeNull();
+    await expect(getFieldImage([dir], 'f')).resolves.toBeNull();
+  });
+});
+
+describe('importing a field', () => {
+  const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3]);
+  const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]);
+  const image: PickedImage = { fileName: 'a.png', bytes: PNG, type: 'png' };
+  const spec = {
+    name: 'My Field',
+    lengthMeters: 16,
+    widthMeters: 8,
+    symmetry: 'mirrored' as const,
+    imageRotated: true,
+    topLeftPixel: [10, 20] as [number, number],
+    bottomRightPixel: [110, 70] as [number, number],
+  };
+
+  it('recognizes images by their contents, whatever the file is called', async () => {
+    const dir = createFolder({});
+    writeFileSync(join(dir, 'looks-like-text.txt'), PNG);
+    writeFileSync(join(dir, 'photo.png'), JPEG);
+    writeFileSync(join(dir, 'fake.png'), 'not an image');
+    expect((await readPickedImage(join(dir, 'looks-like-text.txt'))).image?.type).toBe('png');
+    expect((await readPickedImage(join(dir, 'photo.png'))).image?.type).toBe('jpeg');
+    const fake = await readPickedImage(join(dir, 'fake.png'));
+    expect(fake.image).toBeNull();
+    expect(fake.result.status).toBe('invalid');
+  });
+
+  it('reports a missing file', async () => {
+    expect((await readPickedImage('/does/not/exist.png')).result.status).toBe('invalid');
+  });
+
+  it('makes safe ids from names', () => {
+    expect(toFieldId('My Field 2026!')).toBe('my-field-2026');
+    expect(toFieldId('Campo de Ação')).toBe('campo-de-acao');
+    expect(toFieldId('../../evil')).toBe('evil');
+    expect(toFieldId('区域')).toBe('field');
+  });
+
+  it('saves into the project, in a form that loads back', async () => {
+    const root = createFolder({});
+    const result = await saveCustomField(root, image, spec);
+    expect(result).toMatchObject({ ok: true, field: { id: 'my-field', symmetry: 'mirrored' } });
+    const dir = join(root, PROJECT_FIELDS_DIR);
+    expect(readFileSync(join(dir, 'my-field.png'))).toEqual(PNG);
+    expect((await listFields([dir]))[0]).toMatchObject({
+      imageRotated: true,
+      id: 'my-field',
+      game: 'My Field',
+      lengthMeters: 16,
+    });
+    await expect(getFieldImage([dir], 'my-field')).resolves.toContain('data:image/png');
+  });
+
+  it('never replaces an existing field', async () => {
+    const root = createFolder({});
+    await saveCustomField(root, image, spec);
+    const second = await saveCustomField(root, { ...image, type: 'jpeg', bytes: JPEG }, spec);
+    expect(second).toMatchObject({
+      ok: true,
+      field: { id: 'my-field-2', imageFile: 'my-field-2.jpg' },
+    });
+    expect(readFileSync(join(root, PROJECT_FIELDS_DIR, 'my-field.png'))).toEqual(PNG);
+  });
+
+  it.each<[string, Partial<typeof spec>]>([
+    ['an empty name', { name: '  ' }],
+    ['a zero size', { lengthMeters: 0 }],
+    ['corners with no area', { bottomRightPixel: [10, 20] }],
+  ])('rejects %s, writing nothing', async (_label, change) => {
+    const root = createFolder({});
+    expect((await saveCustomField(root, image, { ...spec, ...change })).ok).toBe(false);
+    expect(existsSync(join(root, PROJECT_FIELDS_DIR))).toBe(false);
+  });
+
+  it('rejects a bad symmetry', async () => {
+    const root = createFolder({});
+    const bad = { ...spec, symmetry: 'diagonal' } as unknown as typeof spec;
+    expect((await saveCustomField(root, image, bad)).ok).toBe(false);
+  });
+});
+
+describe('links in field folders', () => {
+  it('will not read an image through a link', async () => {
+    const outside = createFolder({ 'secret.png': 'secret' });
+    const dir = createFolder({
+      'f.json': JSON.stringify({ ...REEFSCAPE, 'field-image': 'link.png' }),
+    });
+    symlinkSync(join(outside, 'secret.png'), join(dir, 'link.png'));
     await expect(getFieldImage([dir], 'f')).resolves.toBeNull();
   });
 });

@@ -79,13 +79,13 @@ export async function resolveInProject(root: string, relativePath: string): Prom
 export async function writeProjectFile(
   root: string,
   relativePath: string,
-  contents: string,
+  contents: string | Uint8Array,
 ): Promise<void> {
   const target = await resolveInProject(root, relativePath);
   await mkdir(dirname(target), { recursive: true });
   const temp = join(dirname(target), `.regionbool-${randomBytes(6).toString('hex')}.tmp`);
   try {
-    await writeFile(temp, contents, { encoding: 'utf8', flag: 'wx' });
+    await writeFile(temp, contents, { flag: 'wx' });
     await rename(temp, target);
   } catch (error) {
     await rm(temp, { force: true });

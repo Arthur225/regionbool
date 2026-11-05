@@ -1,0 +1,11 @@
+{
+  "game": "2025 Reefscape (welded field)",
+  "field-image": "2025-reefscape.png",
+  "field-corners": {
+    "top-left": [534, 289],
+    "bottom-right": [3466, 1636]
+  },
+  "field-size": [17.548, 8.052],
+  "symmetry": "rotational",
+  "image-rotated": true
+}
