@@ -12,7 +12,8 @@ All positions and lengths use WPILib field coordinates in meters: the origin is 
 RegionProject
 ├── version          File format version, currently 1
 ├── field            lengthMeters, widthMeters, symmetry
-├── output           packageName, className
+├── output           packageName, className, javaProfile (optional)
+├── generatedHash    Hash of the last exported file (optional, see below)
 └── regions[]
     ├── id, name
     ├── allianceMode  fixed | alliance-relative
@@ -47,8 +48,19 @@ RegionProject
 
 There are two layers, because files can be edited by hand or come from anywhere:
 
-1. **The JSON schema** checks structure: required fields, types and allowed values. It will run on load once saving is added in build step 5.
+1. **The JSON schema** checks structure: required fields, types and allowed values. It runs on load, on save and on export.
 2. **`validateProject`** checks meaning: Java names, duplicate methods, shape sizes, and regions with no adding shape. Errors block code generation, and warnings are only shown to the user.
+
+## Saving
+
+`src/main/regionsFile.ts` reads and writes the file. Teams commit it, so it may be edited by hand or come from a merge.
+
+- **A file that can't be understood is never overwritten.** That covers broken JSON, a schema failure and a newer version. The app shows why, and saving and exporting are refused until someone fixes or removes the file.
+- **`javaProfile`** is the WPILib API chosen in the export dialog. Without it, the app detects one.
+- **`generatedHash`** is a SHA-256 of the Java file from the last export, used to notice hand edits. The main process owns it: it never goes to the renderer, and any value the renderer sends is ignored.
+- **Formatting is stable,** with 2-space indentation and a final newline, so git diffs stay readable.
+
+The app doesn't notice this file changing while it's open, such as from a `git pull`. The next save replaces it, so reopen the project after pulling.
 
 ## Method names
 

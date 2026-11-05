@@ -39,10 +39,27 @@ Things to know when changing the canvas:
 - **Drawing is clamped to the field, and moving isn't.** Shapes can be moved partly off the field on purpose.
 - **Coordinates are rounded** to the grid, or to the nearest millimeter with snap off, so generated code doesn't carry meaningless digits.
 
+## Opening, saving and exporting
+
+These live in `actions.ts` and `dialogs/ExportDialog.tsx`, since they involve the main process as well as the state.
+
+`doc !== savedDoc` means there are unsaved changes, so undoing back to the saved version counts as clean. While there are unsaved changes, the renderer sets `onbeforeunload`, and the main process's `will-prevent-unload` handler asks before closing.
+
+Opening a project follows these rules, so work is only lost after a confirmation:
+
+| Situation                                                  | Result                                                                                                            |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Another project is open, with unsaved changes              | Asks first, then loads the new project                                                                            |
+| No project open, drawing, new project has saved regions    | Asks whether to replace the drawing. If not, the project closes again, because saving would overwrite its regions |
+| No project open, drawing, nothing saved in the new project | The drawing carries over                                                                                          |
+| Anything else                                              | Loads what's saved, or starts empty                                                                               |
+
+Reloading the page closes the project in the main process, because a fresh empty editor must not be able to save over it.
+
 ## Point tester
 
 It calls `regionContainsForAlliance` from `geometry.ts`, which is the function proved to match generated Java, so its answer is what the robot code will return. On red, the map uses `flipShape` to show alliance-relative regions where they'll really be. A unit test checks that the flipped shapes match that function across the field.
 
 ## Not yet in the editor
 
-Nothing is saved between runs until build step 5, and the field is a blank grid until build step 6. Zooming and panning aren't planned for v1.
+The field is a blank grid until build step 6. Zooming and panning aren't planned for v1.
