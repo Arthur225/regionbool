@@ -12,16 +12,27 @@ import {
   type AppInfo,
   type ExportPreviewResult,
   type ExportWriteResult,
+  type CustomFieldSpec,
   type OpenProjectResult,
+  type PickImageResult,
   type ProjectInfo,
+  type SaveCustomFieldResult,
   type SaveResult,
 } from '../shared/ipc';
 import { previewExport, writeExport } from './export';
-import { getFieldImage, listFields } from './fields';
+import {
+  getFieldImage,
+  listFields,
+  PROJECT_FIELDS_DIR,
+  readPickedImage,
+  saveCustomField,
+  type PickedImage,
+} from './fields';
 import { detectProject } from './project';
 import { readSavedRegions, saveRegions } from './regionsFile';
 
 let currentProject: ProjectInfo | null = null;
+let pickedImage: PickedImage | null = null;
 
 /** Runs an export step for the current project, reporting any failure as a normal result. */
 async function withProject<T>(
@@ -46,7 +57,7 @@ function bundledFieldsDir(): string {
 /** Field folders in priority order, lowest first. */
 function fieldDirs(): string[] {
   const dirs = [bundledFieldsDir()];
-  if (currentProject) dirs.push(join(currentProject.root, '.regionbool/fields'));
+  if (currentProject) dirs.push(join(currentProject.root, PROJECT_FIELDS_DIR));
   return dirs;
 }
 
@@ -72,6 +83,7 @@ export function registerIpcHandlers(): void {
     const detection = await detectProject(path);
     if (!detection.valid) return { status: 'invalid', path, reasons: detection.reasons };
     currentProject = detection.project;
+    pickedImage = null; // An image picked for one project mustn't land in another.
     return {
       status: 'opened',
       project: detection.project,
@@ -81,6 +93,7 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IpcChannel.CloseProject, () => {
     currentProject = null;
+    pickedImage = null;
   });
 
   ipcMain.handle(IpcChannel.SaveRegions, (_event, data: unknown): Promise<SaveResult> =>
@@ -111,4 +124,32 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IpcChannel.GetFieldImage, (_event, id: unknown): Promise<string | null> => {
     return typeof id === 'string' ? getFieldImage(fieldDirs(), id) : Promise.resolve(null);
   });
+
+  ipcMain.handle(IpcChannel.PickFieldImage, async (event): Promise<PickImageResult> => {
+    const options = {
+      title: 'Choose a field image',
+      properties: ['openFile'] as ['openFile'],
+      filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg'] }],
+    };
+    const window = BrowserWindow.fromWebContents(event.sender);
+    const result = window
+      ? await dialog.showOpenDialog(window, options)
+      : await dialog.showOpenDialog(options);
+    const path = result.filePaths[0];
+    if (result.canceled || !path) return { status: 'canceled' };
+    const { result: picked, image } = await readPickedImage(path);
+    pickedImage = image;
+    return picked;
+  });
+
+  ipcMain.handle(
+    IpcChannel.SaveCustomField,
+    (_event, spec: CustomFieldSpec): Promise<SaveCustomFieldResult> =>
+      withProject(async (root) => {
+        if (!pickedImage) return { ok: false, message: 'Choose an image first.' };
+        const result = await saveCustomField(root, pickedImage, spec);
+        if (result.ok) pickedImage = null;
+        return result;
+      }),
+  );
 }

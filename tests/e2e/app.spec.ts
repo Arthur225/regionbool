@@ -75,7 +75,9 @@ test('the renderer has no direct access to Node or IPC', async () => {
     'getFieldImage',
     'listFields',
     'openProject',
+    'pickFieldImage',
     'previewExport',
+    'saveCustomField',
     'saveRegions',
     'writeExport',
   ]);
@@ -157,8 +159,7 @@ test('a robot project opens, and generated code reaches disk only through the ex
   expect(readFileSync(target, 'utf8')).toBe(handWritten);
 });
 
-test('field listing works with no bundled fields, and bad ids return nothing', async () => {
+test('bad field ids return nothing', async () => {
   const page = await app.firstWindow();
-  expect(await page.evaluate(() => window.regionbool.listFields())).toEqual([]);
   expect(await page.evaluate(() => window.regionbool.getFieldImage('../../etc/passwd'))).toBeNull();
 });

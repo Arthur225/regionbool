@@ -17,6 +17,8 @@ const api: RegionBoolApi = {
     ipcRenderer.invoke(IpcChannel.WriteExport, project, profileId, expectedHash),
   listFields: () => ipcRenderer.invoke(IpcChannel.ListFields),
   getFieldImage: (fieldId) => ipcRenderer.invoke(IpcChannel.GetFieldImage, fieldId),
+  pickFieldImage: () => ipcRenderer.invoke(IpcChannel.PickFieldImage),
+  saveCustomField: (spec) => ipcRenderer.invoke(IpcChannel.SaveCustomField, spec),
 };
 
 contextBridge.exposeInMainWorld('regionbool', api);

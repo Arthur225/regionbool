@@ -1,0 +1,11 @@
+{
+  "game": "2023 Charged Up",
+  "field-image": "2023-chargedup.png",
+  "field-corners": {
+    "top-left": [46, 36],
+    "bottom-right": [1088, 544]
+  },
+  "field-size": [16.54175, 8.0137],
+  "symmetry": "mirrored",
+  "image-rotated": true
+}

@@ -27,6 +27,13 @@ import {
 } from '../../shared/shapeOps';
 import { useEditor } from '../store';
 
+interface LoadedImage {
+  fieldId: string;
+  url: string;
+  width: number;
+  height: number;
+}
+
 const MARGIN_METERS = 0.6;
 const HANDLE_PIXELS = 6;
 const ROTATE_HANDLE_OFFSET_PIXELS = 28;
@@ -144,6 +151,7 @@ export function FieldCanvas() {
   const pressedRef = useRef<Element | null>(null);
   const [pixelsPerMeter, setPixelsPerMeter] = useState(50);
   const [dragDraft, setDragDraft] = useState<Shape | null>(null);
+  const [loadedImage, setLoadedImage] = useState<LoadedImage | null>(null);
 
   const doc = useEditor((s) => s.doc);
   const tool = useEditor((s) => s.tool);
@@ -154,6 +162,7 @@ export function FieldCanvas() {
   const testPoint = useEditor((s) => s.testPoint);
   const testAlliance = useEditor((s) => s.testAlliance);
   const cursor = useEditor((s) => s.cursor);
+  const fields = useEditor((s) => s.fields);
 
   const { field, regions } = doc;
   const { lengthMeters: length, widthMeters: width } = field;
@@ -172,6 +181,35 @@ export function FieldCanvas() {
     observer.observe(svg);
     return () => observer.disconnect();
   }, [length, width]);
+
+  // Decoding the image gives its full size, which placing it on the field requires.
+  const fieldId = field.fieldId;
+  const definition = fields?.find((candidate) => candidate.id === fieldId) ?? null;
+  useEffect(() => {
+    if (!fieldId) return;
+    let current = true;
+    void window.regionbool.getFieldImage(fieldId).then((url) => {
+      if (!url || !current) return;
+      const image = new Image();
+      image.onload = () => {
+        if (current) {
+          setLoadedImage({ fieldId, url, width: image.naturalWidth, height: image.naturalHeight });
+        }
+      };
+      image.src = url;
+    });
+    return () => {
+      current = false;
+    };
+  }, [fieldId, fields]);
+
+  const backgroundImage = definition && loadedImage?.fieldId === definition.id ? loadedImage : null;
+  const imageScaleX = definition
+    ? length / (definition.bottomRightPixel[0] - definition.topLeftPixel[0])
+    : 1;
+  const imageScaleY = definition
+    ? width / (definition.bottomRightPixel[1] - definition.topLeftPixel[1])
+    : 1;
 
   const selectedRegion = regions.find((region) => region.id === selectedRegionId) ?? null;
   const selectedShape =
@@ -409,7 +447,8 @@ export function FieldCanvas() {
   return (
     <svg
       ref={svgRef}
-      className={`field-canvas tool-${tool}`}
+      className={`field-canvas tool-${tool} ${backgroundImage ? 'has-image' : ''}`}
+      data-fields-loaded={fields !== null}
       data-testid="field-canvas"
       data-field-width={width}
       viewBox={`${-MARGIN_METERS} ${-MARGIN_METERS} ${length + MARGIN_METERS * 2} ${width + MARGIN_METERS * 2}`}
@@ -426,6 +465,21 @@ export function FieldCanvas() {
     >
       {/* Field and alliance walls */}
       <rect x="0" y="0" width={length} height={width} className="field-surface" />
+      {backgroundImage && definition && (
+        <image
+          data-rotated={definition.imageRotated}
+          href={backgroundImage.url}
+          data-testid="field-image"
+          x={-definition.topLeftPixel[0] * imageScaleX}
+          y={-definition.topLeftPixel[1] * imageScaleY}
+          width={backgroundImage.width * imageScaleX}
+          height={backgroundImage.height * imageScaleY}
+          preserveAspectRatio="none"
+          pointerEvents="none"
+          // The corners map onto the whole field, so turning about its center keeps them aligned.
+          {...(definition.imageRotated && { transform: `rotate(180 ${length / 2} ${width / 2})` })}
+        />
+      )}
       {verticalLines.map((x) => (
         <line
           key={x}

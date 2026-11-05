@@ -2,7 +2,7 @@
 
 RegionBool is an Electron desktop app for FRC programmers. You draw regions on a field map using rectangles, circles, triangles and polygons, and the app generates a Java class in a WPILib robot project with one boolean method per region, answering "is this position inside the region?".
 
-**Current state:** build step 5 of 7. The app works end to end: open a robot project, draw regions, save them, and export a Java class after reviewing a diff. Fields are still a blank grid (step 6), and there are no installers yet (step 7).
+**Current state:** build step 6 of 7. The app works end to end with real field images for 2022 to 2026 and custom image import. There are no installers yet (step 7). **Bundled image licenses are unconfirmed, which blocks any public release.**
 
 ## Commands
 
@@ -23,44 +23,45 @@ Every path in this table must exist. `tests/unit/docs.test.ts` fails if one does
 
 <!-- repo-map:start -->
 
-| Path                                    | Purpose                                                                   |
-| --------------------------------------- | ------------------------------------------------------------------------- |
-| `src/main/index.ts`                     | Main process entry: window creation and security                          |
-| `src/main/ipc.ts`                       | IPC handlers, and holds the current project                               |
-| `src/main/project.ts`                   | Recognizes WPILib Java projects, detects the import profile               |
-| `src/main/export.ts`                    | Validates region data, generates code, applies overwrite rules            |
-| `src/main/regionsFile.ts`               | Reads and saves `.regionbool/regions.json`, never over an unreadable file |
-| `src/main/writer.ts`                    | Atomic writes that can't leave the project                                |
-| `src/main/fields.ts`                    | Loads field definitions and images                                        |
-| `src/preload/index.ts`                  | Bridge that exposes `window.regionbool` to the renderer                   |
-| `src/preload/api.d.ts`                  | Type declaration for `window.regionbool`                                  |
-| `src/shared/ipc.ts`                     | IPC channel names and types, the full renderer-to-main contract           |
-| `src/shared/model.ts`                   | Region types and validation                                               |
-| `src/shared/geometry.ts`                | Point-in-region math used by the preview                                  |
-| `src/shared/javaProfiles.ts`            | What generated code needs for each WPILib version                         |
-| `src/shared/fields.ts`                  | Field definition format and parser                                        |
-| `src/shared/codegen.ts`                 | Generates the Java class                                                  |
-| `schemas/regions.schema.json`           | JSON Schema for `.regionbool/regions.json`                                |
-| `src/shared/lineDiff.ts`                | Line diff for the export preview                                          |
-| `src/shared/shapeOps.ts`                | Pure shape edits: move, rotate, resize, flip, snap                        |
-| `src/renderer/store.ts`                 | Editor state and undo                                                     |
-| `src/renderer/canvas/FieldCanvas.tsx`   | The field map and all pointer handling                                    |
-| `src/renderer/panels/`                  | Toolbar, region list, properties and point tester                         |
-| `src/renderer/actions.ts`               | Opening and saving, which involve both processes                          |
-| `src/renderer/dialogs/ExportDialog.tsx` | Export preview, warnings and writing                                      |
-| `src/renderer/App.tsx`                  | Root React component                                                      |
-| `src/renderer/main.tsx`                 | Renderer entry point                                                      |
-| `resources/fields/`                     | Fields bundled with the app, empty until build step 6                     |
-| `tests/unit/`                           | Vitest tests                                                              |
-| `tests/e2e/`                            | Playwright tests that launch the real Electron app                        |
-| `docs/architecture.md`                  | Processes, security model and data flow                                   |
-| `docs/data-model.md`                    | Regions, coordinates, the rules for "inside", file format                 |
-| `docs/codegen.md`                       | Generated class layout, import profiles, how to add a profile             |
-| `docs/fields.md`                        | Field file format, symmetry, image licenses                               |
-| `docs/editor.md`                        | Canvas coordinates, state, undo, interaction pitfalls                     |
-| `docs/testing.md`                       | Test layers, what each proves, what skips mean                            |
-| `docs/decisions/`                       | Why the project is built the way it is                                    |
-| `CONTRIBUTING.md`                       | Branch, pull request and test expectations                                |
+| Path                                         | Purpose                                                                   |
+| -------------------------------------------- | ------------------------------------------------------------------------- |
+| `src/main/index.ts`                          | Main process entry: window creation and security                          |
+| `src/main/ipc.ts`                            | IPC handlers, and holds the current project                               |
+| `src/main/project.ts`                        | Recognizes WPILib Java projects, detects the import profile               |
+| `src/main/export.ts`                         | Validates region data, generates code, applies overwrite rules            |
+| `src/main/regionsFile.ts`                    | Reads and saves `.regionbool/regions.json`, never over an unreadable file |
+| `src/main/writer.ts`                         | Atomic writes that can't leave the project                                |
+| `src/main/fields.ts`                         | Loads field definitions and images                                        |
+| `src/preload/index.ts`                       | Bridge that exposes `window.regionbool` to the renderer                   |
+| `src/preload/api.d.ts`                       | Type declaration for `window.regionbool`                                  |
+| `src/shared/ipc.ts`                          | IPC channel names and types, the full renderer-to-main contract           |
+| `src/shared/model.ts`                        | Region types and validation                                               |
+| `src/shared/geometry.ts`                     | Point-in-region math used by the preview                                  |
+| `src/shared/javaProfiles.ts`                 | What generated code needs for each WPILib version                         |
+| `src/shared/fields.ts`                       | Field definition format and parser                                        |
+| `src/shared/codegen.ts`                      | Generates the Java class                                                  |
+| `schemas/regions.schema.json`                | JSON Schema for `.regionbool/regions.json`                                |
+| `src/shared/lineDiff.ts`                     | Line diff for the export preview                                          |
+| `src/shared/shapeOps.ts`                     | Pure shape edits: move, rotate, resize, flip, snap                        |
+| `src/renderer/store.ts`                      | Editor state and undo                                                     |
+| `src/renderer/canvas/FieldCanvas.tsx`        | The field map and all pointer handling                                    |
+| `src/renderer/panels/`                       | Toolbar, region list, properties and point tester                         |
+| `src/renderer/actions.ts`                    | Opening and saving, which involve both processes                          |
+| `src/renderer/dialogs/ExportDialog.tsx`      | Export preview, warnings and writing                                      |
+| `src/renderer/dialogs/FieldImportDialog.tsx` | Importing an image and marking the field's corners                        |
+| `src/renderer/App.tsx`                       | Root React component                                                      |
+| `src/renderer/main.tsx`                      | Renderer entry point                                                      |
+| `resources/fields/`                          | Bundled field definitions and images, with sources in `SOURCES.md`        |
+| `tests/unit/`                                | Vitest tests                                                              |
+| `tests/e2e/`                                 | Playwright tests that launch the real Electron app                        |
+| `docs/architecture.md`                       | Processes, security model and data flow                                   |
+| `docs/data-model.md`                         | Regions, coordinates, the rules for "inside", file format                 |
+| `docs/codegen.md`                            | Generated class layout, import profiles, how to add a profile             |
+| `docs/fields.md`                             | Field file format, symmetry, image licenses                               |
+| `docs/editor.md`                             | Canvas coordinates, state, undo, interaction pitfalls                     |
+| `docs/testing.md`                            | Test layers, what each proves, what skips mean                            |
+| `docs/decisions/`                            | Why the project is built the way it is                                    |
+| `CONTRIBUTING.md`                            | Branch, pull request and test expectations                                |
 
 <!-- repo-map:end -->
 
@@ -81,7 +82,8 @@ Breaking one of these is a bug even if the tests pass. Rules marked (lint) are e
 
 10. **Writes stay inside the selected project,** and the app never overwrites a file without the RegionBool header.
 11. **An unreadable `regions.json` is never overwritten,** and unsaved work is only discarded after asking.
-12. **The renderer never sends paths or file contents.** The main process picks the project through a dialog and generates code itself.
+12. **A bundled image's orientation must match field coordinates, with blue on the left.** Tests can't fully catch this, so check it against AprilTag positions by eye.
+13. **The renderer never sends paths or file contents.** The main process picks files through dialogs and generates code itself.
 
 ## Build status
 
@@ -94,7 +96,7 @@ Each step is one branch and one pull request. The full reasoning is in `docs/dec
 | 3    | Project detection, safe writer, field loading, IPC      | Done   |
 | 4    | Canvas, drawing tools, region panel, undo, point tester | Done   |
 | 5    | Export with diff, save and load, Field2d helper         | Done   |
-| 6    | Bundled fields and custom field import                  | To do  |
+| 6    | Bundled fields and custom field import                  | Done   |
 | 7    | Packaging, release workflow, user README                | To do  |
 
 ## Common changes
@@ -102,6 +104,8 @@ Each step is one branch and one pull request. The full reasoning is in `docs/dec
 **Add an IPC call:** declare the channel and types in `src/shared/ipc.ts`, add the method to `RegionBoolApi`, implement it in `src/preload/index.ts`, register the handler in `src/main/ipc.ts`, and update the expected key list in `tests/e2e/app.spec.ts`. That test exists so any growth in what the renderer can reach is a deliberate change. Validate arguments in the handler, because the main process shouldn't trust renderer input, and keep logic in a module that doesn't import Electron so it can be unit tested. Update the table in `docs/architecture.md`.
 
 **Change canvas behavior:** read `docs/editor.md` first. Put shape math in `src/shared/shapeOps.ts`, where it can be unit tested, and add an end-to-end case in `tests/e2e/canvas.spec.ts`.
+
+**Add a season's field:** follow `docs/fields.md`, including checking the image's orientation by eye.
 
 **Change generated Java:** edit `src/shared/codegen.ts`, and `geometry.ts` too if the math changes. Run `npm test`, then review the snapshot diff before accepting it with `npx vitest run -u`.
 

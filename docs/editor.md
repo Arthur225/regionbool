@@ -56,10 +56,16 @@ Opening a project follows these rules, so work is only lost after a confirmation
 
 Reloading the page closes the project in the main process, because a fresh empty editor must not be able to save over it.
 
+## Fields
+
+The app starts on the newest field, without counting that as a change. `FieldCanvas` loads the image for `field.fieldId` and places it so its marked corners land on the field's corners, turning it 180° about the field's center if the definition says so. See `docs/fields.md` for why that matters.
+
+The import dialog measures clicks as a fraction of the displayed image and converts them to the image's own pixels, so its size on screen doesn't matter. Its container has to shrink to fit the image for that to work.
+
 ## Point tester
 
 It calls `regionContainsForAlliance` from `geometry.ts`, which is the function proved to match generated Java, so its answer is what the robot code will return. On red, the map uses `flipShape` to show alliance-relative regions where they'll really be. A unit test checks that the flipped shapes match that function across the field.
 
 ## Not yet in the editor
 
-The field is a blank grid until build step 6. Zooming and panning aren't planned for v1.
+Zooming and panning aren't planned for v1.

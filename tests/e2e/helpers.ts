@@ -1,4 +1,5 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { deflateSync, crc32 } from 'node:zlib';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { _electron as electron, type ElectronApplication, type Page } from '@playwright/test';
@@ -11,8 +12,13 @@ export async function launchApp(): Promise<{ app: ElectronApplication; page: Pag
   const app = await electron.launch({ args: ['.'] });
   await setUnsavedPromptAnswer(app, 0);
   const page = await app.firstWindow();
-  await page.getByTestId('field-canvas').waitFor();
+  await waitForEditor(page);
   return { app, page };
+}
+
+/** Waits for the editor, including the initial field, which replaces the empty document. */
+export async function waitForEditor(page: Page): Promise<void> {
+  await page.locator('[data-testid="field-canvas"][data-fields-loaded="true"]').waitFor();
 }
 
 /** Reloads to a fresh editor, dropping unsaved work without triggering the prompt. */
@@ -21,7 +27,7 @@ export async function freshPage(page: Page): Promise<void> {
     (globalThis as unknown as { onbeforeunload: unknown }).onbeforeunload = null;
   });
   await page.reload();
-  await page.getByTestId('field-canvas').waitFor();
+  await waitForEditor(page);
 }
 
 /** Sets the prompt's answer, 0 to discard or 1 to keep editing. */
@@ -125,4 +131,30 @@ export async function drawRect(
     .getByRole('button', { name: 'Rectangle' })
     .click();
   await dragField(page, from, to);
+}
+
+/** Builds a real solid-color PNG, so tests can import an image of a known size. */
+export function createPng(width: number, height: number): Buffer {
+  const chunk = (type: string, data: Buffer) => {
+    const body = Buffer.concat([Buffer.from(type), data]);
+    const length = Buffer.alloc(4);
+    length.writeUInt32BE(data.length);
+    const crc = Buffer.alloc(4);
+    crc.writeUInt32BE(crc32(body));
+    return Buffer.concat([length, body, crc]);
+  };
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header[8] = 8; // 8 bits per channel
+  header[9] = 2; // RGB
+  const row = Buffer.alloc(1 + width * 3, 0x60);
+  row[0] = 0;
+  const pixels = Buffer.concat(Array.from({ length: height }, () => row));
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk('IHDR', header),
+    chunk('IDAT', deflateSync(pixels)),
+    chunk('IEND', Buffer.alloc(0)),
+  ]);
 }

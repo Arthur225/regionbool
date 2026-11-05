@@ -4,6 +4,7 @@
  * endGesture. Selection, tools and the point tester aren't part of undo.
  */
 import { create } from 'zustand';
+import type { FieldDefinition } from '../shared/fields';
 import type { AllianceState } from '../shared/geometry';
 import type { ProjectInfo } from '../shared/ipc';
 import { REGIONS_FILE_VERSION } from '../shared/model';
@@ -65,6 +66,8 @@ interface EditorState {
   /** The open robot project, or null. The main process holds the same one. */
   project: ProjectInfo | null;
   notice: Notice | null;
+  /** Bundled and project fields, or null until they've loaded. */
+  fields: FieldDefinition[] | null;
   past: RegionProject[];
   future: RegionProject[];
   /** The document when the current drag started, or null if not dragging. */
@@ -87,6 +90,7 @@ interface EditorState {
 
   setProject(project: ProjectInfo | null): void;
   setNotice(notice: Notice | null): void;
+  setFields(fields: FieldDefinition[]): void;
   /** Records `doc` as saved, including any changes made while saving it. */
   markSaved(doc: RegionProject): void;
   setTool(tool: Tool): void;
@@ -168,6 +172,7 @@ export const useEditor = create<EditorState>((set, get) => {
     savedDoc: emptyDocument,
     project: null,
     notice: null,
+    fields: null,
     ...initialTransient,
     tool: 'select',
     drawMode: 'add',
@@ -178,6 +183,7 @@ export const useEditor = create<EditorState>((set, get) => {
 
     setProject: (project) => set({ project }),
     setNotice: (notice) => set({ notice }),
+    setFields: (fields) => set({ fields }),
     markSaved: (doc) => set({ doc, savedDoc: doc }),
     setTool: (tool) => set({ tool, draftPoints: [] }),
     setDrawMode: (drawMode) => set({ drawMode }),

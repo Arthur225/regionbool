@@ -2,10 +2,20 @@
 import { regionContainsForAlliance } from '../../shared/geometry';
 import type { ProjectInfo } from '../../shared/ipc';
 import { JAVA_PROFILES } from '../../shared/javaProfiles';
-import type { FieldSymmetry, PolygonShape, Shape } from '../../shared/model';
+import type { FieldInfo, FieldSymmetry, PolygonShape, Shape } from '../../shared/model';
+import { fieldInfoFrom } from '../actions';
 import { regionColor } from '../canvas/FieldCanvas';
 import { useEditor } from '../store';
 import { NumberField } from './NumberField';
+
+/** Removes the field definition, because a custom size wouldn't match its image. */
+function customSize(field: FieldInfo): FieldInfo {
+  return {
+    lengthMeters: field.lengthMeters,
+    widthMeters: field.widthMeters,
+    symmetry: field.symmetry,
+  };
+}
 
 function profileLabel(project: ProjectInfo): string {
   const { id, confident, source } = project.profile;
@@ -195,9 +205,10 @@ function PointTester() {
   );
 }
 
-export function PropertiesPanel() {
+export function PropertiesPanel({ onImportField }: { onImportField(): void }) {
   const doc = useEditor((s) => s.doc);
   const project = useEditor((s) => s.project);
+  const fields = useEditor((s) => s.fields);
   const tool = useEditor((s) => s.tool);
   const selectedRegionId = useEditor((s) => s.selectedRegionId);
   const selectedShapeId = useEditor((s) => s.selectedShapeId);
@@ -221,6 +232,26 @@ export function PropertiesPanel() {
 
       <section>
         <h2>Field</h2>
+        <select
+          className="field-picker"
+          aria-label="Field"
+          value={fields?.some((f) => f.id === field.fieldId) ? field.fieldId : ''}
+          onChange={(event) => {
+            const definition = fields?.find((f) => f.id === event.target.value);
+            if (definition) {
+              editor.setField(fieldInfoFrom(definition, field));
+            } else {
+              editor.setField(customSize(field));
+            }
+          }}
+        >
+          <option value="">Blank grid (custom size)</option>
+          {fields?.map((definition) => (
+            <option key={definition.id} value={definition.id}>
+              {definition.game}
+            </option>
+          ))}
+        </select>
         <div className="field-row">
           <NumberField
             label="Length"
@@ -228,7 +259,7 @@ export function PropertiesPanel() {
             min={0}
             testId="field-length"
             value={field.lengthMeters}
-            onCommit={(lengthMeters) => editor.setField({ ...field, lengthMeters })}
+            onCommit={(lengthMeters) => editor.setField({ ...customSize(field), lengthMeters })}
           />
           <NumberField
             label="Width"
@@ -236,7 +267,7 @@ export function PropertiesPanel() {
             min={0}
             testId="field-width"
             value={field.widthMeters}
-            onCommit={(widthMeters) => editor.setField({ ...field, widthMeters })}
+            onCommit={(widthMeters) => editor.setField({ ...customSize(field), widthMeters })}
           />
         </div>
         <label className="inline-field">
@@ -252,6 +283,17 @@ export function PropertiesPanel() {
             <option value="mirrored">Mirrored</option>
           </select>
         </label>
+        <button
+          type="button"
+          className="full-width"
+          disabled={!project}
+          title={
+            project ? 'Use your own field image in this project' : 'Open a robot project first'
+          }
+          onClick={onImportField}
+        >
+          Import field image
+        </button>
       </section>
 
       {project && (
