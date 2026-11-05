@@ -10,7 +10,7 @@
  */
 import type { FieldDefinition } from './fields';
 import type { JavaProfileId } from './javaProfiles';
-import type { RegionProject, ValidationIssue } from './model';
+import type { FieldSymmetry, RegionProject, ValidationIssue } from './model';
 
 /** Names of all IPC channels. */
 export const IpcChannel = {
@@ -32,6 +32,10 @@ export const IpcChannel = {
   ListFields: 'fields:list',
   /** Takes a field id. Returns the image as a data URL, or null if unavailable. */
   GetFieldImage: 'fields:get-image',
+  /** Shows a file picker for an image, and remembers the file. Returns {@link PickImageResult}. */
+  PickFieldImage: 'fields:pick-image',
+  /** Takes a {@link CustomFieldSpec}. Copies the picked image into the project. Returns {@link SaveCustomFieldResult}. */
+  SaveCustomField: 'fields:save-custom',
 } as const;
 
 /** Basic facts about the running app, used by the UI and to confirm the IPC bridge works. */
@@ -133,6 +137,28 @@ export type ExportWriteResult =
   | { ok: true; relativePath: string; hash: string }
   | { ok: false; message: string; issues: ValidationIssue[] };
 
+/** The result of asking the user to pick a field image. */
+export type PickImageResult =
+  | { status: 'picked'; fileName: string; dataUrl: string }
+  | { status: 'canceled' }
+  | { status: 'invalid'; message: string };
+
+/** What the user entered about an imported image. Pixel positions are in the image's own pixels. */
+export interface CustomFieldSpec {
+  name: string;
+  lengthMeters: number;
+  widthMeters: number;
+  symmetry: FieldSymmetry;
+  /** True if the image shows red on the left. */
+  imageRotated: boolean;
+  topLeftPixel: [number, number];
+  bottomRightPixel: [number, number];
+}
+
+/** The result of importing a field image. */
+export type SaveCustomFieldResult =
+  { ok: true; field: FieldDefinition } | { ok: false; message: string };
+
 /** The API the preload script exposes to the renderer as `window.regionbool`. */
 export interface RegionBoolApi {
   getAppInfo(): Promise<AppInfo>;
@@ -151,4 +177,7 @@ export interface RegionBoolApi {
   ): Promise<ExportWriteResult>;
   listFields(): Promise<FieldDefinition[]>;
   getFieldImage(fieldId: string): Promise<string | null>;
+  pickFieldImage(): Promise<PickImageResult>;
+  /** Imports the most recently picked image. The renderer never names a file. */
+  saveCustomField(spec: CustomFieldSpec): Promise<SaveCustomFieldResult>;
 }

@@ -1,9 +1,10 @@
 /** Root component: lays out the editor and handles keyboard shortcuts. */
 import { useEffect, useState } from 'react';
 import type { AppInfo } from '../shared/ipc';
-import { saveProject } from './actions';
+import { refreshFields, saveProject } from './actions';
 import { FieldCanvas } from './canvas/FieldCanvas';
 import { ExportDialog } from './dialogs/ExportDialog';
+import { FieldImportDialog } from './dialogs/FieldImportDialog';
 import { PropertiesPanel } from './panels/PropertiesPanel';
 import { RegionPanel } from './panels/RegionPanel';
 import { Toolbar } from './panels/Toolbar';
@@ -97,6 +98,9 @@ function StatusBar({ info }: { info: AppInfo | null }) {
 export function App() {
   const [info, setInfo] = useState<AppInfo | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [importImage, setImportImage] = useState<{ fileName: string; dataUrl: string } | null>(
+    null,
+  );
   const notice = useEditor((s) => s.notice);
   const dirty = useEditor((s) => s.doc !== s.savedDoc);
   const projectName = useEditor((s) => s.project?.name);
@@ -104,7 +108,7 @@ export function App() {
   useEffect(() => {
     void window.regionbool.getAppInfo().then(setInfo);
     // A reloaded page starts empty, so the main process must not keep a project it would save over.
-    void window.regionbool.closeProject();
+    void window.regionbool.closeProject().then(refreshFields);
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, []);
@@ -114,6 +118,19 @@ export function App() {
     window.onbeforeunload = dirty ? () => true : null;
     document.title = `${dirty ? '• ' : ''}${projectName ? `${projectName} - ` : ''}RegionBool`;
   }, [dirty, projectName]);
+
+  async function chooseImage() {
+    const result = await window.regionbool.pickFieldImage();
+    if (result.status === 'picked') {
+      setImportImage(result);
+    } else if (result.status === 'invalid') {
+      useEditor.getState().setNotice({
+        kind: 'error',
+        title: "That image can't be used.",
+        details: [result.message],
+      });
+    }
+  }
 
   return (
     <div className="app">
@@ -138,10 +155,13 @@ export function App() {
         <main className="canvas-area">
           <FieldCanvas />
         </main>
-        <PropertiesPanel />
+        <PropertiesPanel onImportField={() => void chooseImage()} />
       </div>
       <StatusBar info={info} />
       {exporting && <ExportDialog onClose={() => setExporting(false)} />}
+      {importImage && (
+        <FieldImportDialog image={importImage} onClose={() => setImportImage(null)} />
+      )}
     </div>
   );
 }
