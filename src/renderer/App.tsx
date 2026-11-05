@@ -1,59 +1,132 @@
-/**
- * Root component. For now it's a small page for opening a project and seeing what was detected.
- * The field canvas replaces it in build step 4.
- */
+/** Root component: lays out the editor and handles keyboard shortcuts. */
 import { useEffect, useState } from 'react';
 import type { AppInfo, OpenProjectResult, ProjectInfo } from '../shared/ipc';
-import { JAVA_PROFILES } from '../shared/javaProfiles';
+import { FieldCanvas } from './canvas/FieldCanvas';
+import { PropertiesPanel } from './panels/PropertiesPanel';
+import { RegionPanel } from './panels/RegionPanel';
+import { Toolbar } from './panels/Toolbar';
+import { useEditor, type Tool } from './store';
 
-function profileLabel(project: ProjectInfo): string {
-  const { id, confident, source } = project.profile;
-  if (!id) return 'Could not be determined';
-  const label = JAVA_PROFILES[id].label;
-  const basis = source === 'imports' ? 'from the project imports' : 'from GradleRIO';
-  return `${label}, ${basis}${confident ? '' : ' (needs confirming)'}`;
+const TOOL_KEYS: Record<string, Tool> = {
+  v: 'select',
+  r: 'rect',
+  c: 'circle',
+  t: 'triangle',
+  p: 'polygon',
+  x: 'test',
+};
+
+function isTyping(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLSelectElement ||
+    target instanceof HTMLTextAreaElement
+  );
+}
+
+function handleKey(event: KeyboardEvent): void {
+  // Text fields keep their own undo and shortcuts.
+  if (isTyping(event.target)) return;
+  const editor = useEditor.getState();
+  const key = event.key.toLowerCase();
+
+  if ((event.metaKey || event.ctrlKey) && key === 'z') {
+    event.preventDefault();
+    if (event.shiftKey) editor.redo();
+    else editor.undo();
+    return;
+  }
+  if ((event.metaKey || event.ctrlKey) && key === 'y') {
+    event.preventDefault();
+    editor.redo();
+    return;
+  }
+  if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+  if (key === 'escape') {
+    editor.setTool('select');
+  } else if (key === 'enter' && editor.tool === 'polygon' && editor.draftPoints.length >= 3) {
+    editor.addShape({ kind: 'polygon', points: editor.draftPoints });
+    editor.setTool('select');
+  } else if ((key === 'delete' || key === 'backspace') && editor.selectedShapeId) {
+    editor.deleteShape(editor.selectedShapeId);
+  } else if (TOOL_KEYS[key]) {
+    editor.setTool(TOOL_KEYS[key]);
+  }
+}
+
+function StatusBar({ info }: { info: AppInfo | null }) {
+  const cursor = useEditor((s) => s.cursor);
+  const tool = useEditor((s) => s.tool);
+  const draftCount = useEditor((s) => s.draftPoints.length);
+
+  const hints: Partial<Record<Tool, string>> = {
+    rect: 'Drag to draw a rectangle.',
+    circle: 'Drag from the center to draw a circle.',
+    triangle: `Click 3 points. ${draftCount} placed.`,
+    polygon: `Click to place points, then double-click, press Enter, or click the first point to finish. ${draftCount} placed.`,
+    test: 'Click the field to test a point.',
+  };
+
+  return (
+    <footer className="status-bar">
+      <span data-testid="cursor-position">
+        {cursor ? `x ${cursor.x.toFixed(2)} m, y ${cursor.y.toFixed(2)} m` : 'Off the field map'}
+      </span>
+      <span className="status-hint">{hints[tool] ?? ''}</span>
+      {info && <span data-testid="app-version">Version {info.version}</span>}
+    </footer>
+  );
 }
 
 export function App() {
   const [info, setInfo] = useState<AppInfo | null>(null);
-  const [result, setResult] = useState<OpenProjectResult | null>(null);
+  const [project, setProject] = useState<ProjectInfo | null>(null);
+  const [problem, setProblem] = useState<Extract<OpenProjectResult, { status: 'invalid' }> | null>(
+    null,
+  );
 
   useEffect(() => {
     void window.regionbool.getAppInfo().then(setInfo);
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
   }, []);
 
+  function onProjectResult(result: OpenProjectResult) {
+    if (result.status === 'opened') {
+      setProject(result.project);
+      setProblem(null);
+    } else if (result.status === 'invalid') {
+      setProblem(result);
+    }
+  }
+
   return (
-    <main className="placeholder">
-      <h1>RegionBool</h1>
-      <p>Draw FRC field regions and generate boolean Java methods.</p>
-      {info && <p data-testid="app-version">Version {info.version}</p>}
-
-      <button type="button" onClick={() => void window.regionbool.openProject().then(setResult)}>
-        Open robot project
-      </button>
-
-      {result?.status === 'opened' && (
-        <dl data-testid="project-details">
-          <dt>Project</dt>
-          <dd>{result.project.name}</dd>
-          <dt>GradleRIO</dt>
-          <dd>{result.project.gradleRioVersion ?? 'Unknown'}</dd>
-          <dt>WPILib API</dt>
-          <dd>{profileLabel(result.project)}</dd>
-          <dt>Generated package</dt>
-          <dd>{result.project.defaultPackageName}</dd>
-        </dl>
-      )}
-      {result?.status === 'invalid' && (
-        <div role="alert" data-testid="project-error">
-          <p>That folder isn&apos;t a WPILib Java project:</p>
-          <ul>
-            {result.reasons.map((reason) => (
-              <li key={reason}>{reason}</li>
-            ))}
-          </ul>
+    <div className="app">
+      <Toolbar onProjectResult={onProjectResult} />
+      {problem && (
+        <div className="banner" role="alert" data-testid="project-error">
+          <div>
+            <strong>That folder isn&apos;t a WPILib Java project.</strong>
+            <ul>
+              {problem.reasons.map((reason) => (
+                <li key={reason}>{reason}</li>
+              ))}
+            </ul>
+          </div>
+          <button type="button" onClick={() => setProblem(null)}>
+            Dismiss
+          </button>
         </div>
       )}
-    </main>
+      <div className="workspace">
+        <RegionPanel />
+        <main className="canvas-area">
+          <FieldCanvas />
+        </main>
+        <PropertiesPanel project={project} />
+      </div>
+      <StatusBar info={info} />
+    </div>
   );
 }

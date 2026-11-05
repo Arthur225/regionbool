@@ -78,7 +78,7 @@ Writes go to a temporary file beside the target, then get renamed into place, so
 
 ## Planned data flow
 
-This is the design for the finished app. Everything except the canvas, diff preview and `regions.json` saving exists. Those come in build steps 4 and 5.
+This is the design for the finished app. Everything except the diff preview and `regions.json` saving exists. Those come in build step 5.
 
 ```mermaid
 flowchart LR
