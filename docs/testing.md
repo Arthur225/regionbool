@@ -35,6 +35,8 @@ These tests skip rather than fail when their requirements are missing, so **a sk
 
 ## Manual checks
 
+**Field image orientation can't be fully automated.** When adding or changing a bundled image, follow the check in `docs/fields.md`: draw the AprilTag positions over it and look.
+
 `modern` real compile needs JDK 25. To run it, put a JDK 25 `javac` on your `PATH`, have a built alpha-6 project in the Gradle cache, and run `npm test`. Confirm the test shows as passed rather than skipped.
 
 End-to-end tests replace `dialog.showOpenDialog` because a native dialog can't be driven by a test, so the real dialog is only exercised by hand.

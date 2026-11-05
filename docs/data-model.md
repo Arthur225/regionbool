@@ -11,7 +11,7 @@ All positions and lengths use WPILib field coordinates in meters: the origin is 
 ```
 RegionProject
 ├── version          File format version, currently 1
-├── field            lengthMeters, widthMeters, symmetry
+├── field            lengthMeters, widthMeters, symmetry, fieldId (optional)
 ├── output           packageName, className, javaProfile (optional)
 ├── generatedHash    Hash of the last exported file (optional, see below)
 └── regions[]
@@ -56,6 +56,7 @@ There are two layers, because files can be edited by hand or come from anywhere:
 `src/main/regionsFile.ts` reads and writes the file. Teams commit it, so it may be edited by hand or come from a merge.
 
 - **A file that can't be understood is never overwritten.** That covers broken JSON, a schema failure and a newer version. The app shows why, and saving and exporting are refused until someone fixes or removes the file.
+- **`fieldId`** names the field definition in use. Changing the size by hand removes it, because the image would no longer match. If the definition can't be found, the saved size and symmetry still apply, on a blank grid.
 - **`javaProfile`** is the WPILib API chosen in the export dialog. Without it, the app detects one.
 - **`generatedHash`** is a SHA-256 of the Java file from the last export, used to notice hand edits. The main process owns it: it never goes to the renderer, and any value the renderer sends is ignored.
 - **Formatting is stable,** with 2-space indentation and a final newline, so git diffs stay readable.

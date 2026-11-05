@@ -1,6 +1,6 @@
 # 0007: Bundle field images, with custom import
 
-**Status:** accepted
+**Status:** accepted, with sources and orientation updated by [0014](0014-field-image-sources.md)
 
 ## Decision
 

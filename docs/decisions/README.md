@@ -15,3 +15,4 @@ Short notes on why the project is built the way it is. Add a new numbered file f
 - [0011: Use electron-vite, React and SVG](0011-stack.md)
 - [0012: Keep paths and code out of the renderer](0012-renderer-sends-data-only.md)
 - [0013: Protect team work in saved files](0013-protect-saved-work.md)
+- [0014: Bundle WPILib's field images, with license unconfirmed](0014-field-image-sources.md)
