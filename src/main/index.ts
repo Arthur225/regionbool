@@ -1,5 +1,5 @@
 /** Main process entry point: creates the window and applies the app's security settings. */
-import { app, BrowserWindow, shell } from 'electron';
+import { app, BrowserWindow, dialog, shell } from 'electron';
 import { join } from 'node:path';
 import { registerIpcHandlers } from './ipc';
 
@@ -31,6 +31,19 @@ function createWindow(): BrowserWindow {
   });
   window.webContents.on('will-navigate', (event, url) => {
     if (url !== window.webContents.getURL()) event.preventDefault();
+  });
+
+  // The renderer blocks closing while there are unsaved changes, and Electron leaves asking to us.
+  window.webContents.on('will-prevent-unload', (event) => {
+    const choice = dialog.showMessageBoxSync(window, {
+      type: 'warning',
+      message: 'You have unsaved changes.',
+      detail: 'Your regions will be lost if you close without saving.',
+      buttons: ['Close without saving', 'Keep editing'],
+      defaultId: 1,
+      cancelId: 1,
+    });
+    if (choice === 0) event.preventDefault();
   });
 
   const devServerUrl = process.env['ELECTRON_RENDERER_URL'];

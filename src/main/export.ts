@@ -5,22 +5,14 @@
  * the file schema here, and `generateJava` runs the semantic checks.
  */
 import { readFile } from 'node:fs/promises';
-import { Ajv } from 'ajv';
-import schema from '../../schemas/regions.schema.json';
 import { generateJava, InvalidProjectError } from '../shared/codegen';
 import type { ExportFileStatus, ExportPreviewResult, ExportWriteResult } from '../shared/ipc';
 import { JAVA_PROFILES, type JavaProfileId } from '../shared/javaProfiles';
 import type { RegionProject } from '../shared/model';
+import { checkRegionData, readRegionsFile, REGIONS_FILE, saveRegions } from './regionsFile';
 import { hasGeneratedHeader, hashText, resolveInProject, writeProjectFile } from './writer';
 
-const validateSchema = new Ajv({ allErrors: true }).compile<RegionProject>(schema);
-
-interface Failure {
-  ok: false;
-  message: string;
-  issues: [];
-}
-const failure = (message: string): Failure => ({ ok: false, message, issues: [] });
+const failure = (message: string) => ({ ok: false as const, message, issues: [] });
 
 function isProfileId(value: unknown): value is JavaProfileId {
   return typeof value === 'string' && Object.hasOwn(JAVA_PROFILES, value);
@@ -54,13 +46,12 @@ export async function previewExport(
   profileId: unknown,
 ): Promise<ExportPreviewResult> {
   if (!isProfileId(profileId)) return failure('Unknown WPILib profile.');
-  if (!validateSchema(data)) {
-    return failure(`The region data is not valid: ${new Ajv().errorsText(validateSchema.errors)}`);
-  }
+  const checked = checkRegionData(data);
+  if (!checked.ok) return failure(`The region data is not valid: ${checked.message}`);
 
   let generated: string;
   try {
-    generated = generateJava(data, JAVA_PROFILES[profileId]);
+    generated = generateJava(checked.project, JAVA_PROFILES[profileId]);
   } catch (error) {
     if (error instanceof InvalidProjectError) {
       return { ok: false, message: error.message, issues: [...error.issues] };
@@ -68,21 +59,23 @@ export async function previewExport(
     throw error;
   }
 
-  const relativePath = generatedFilePath(data);
+  const relativePath = generatedFilePath(checked.project);
   const existing = await readIfExists(await resolveInProject(root, relativePath));
-  return {
-    ok: true,
-    relativePath,
-    status: fileStatus(existing, generated),
-    existing,
-    generated,
-    existingHash: existing === null ? null : hashText(existing),
-  };
+  const existingHash = existing === null ? null : hashText(existing);
+  const status = fileStatus(existing, generated);
+
+  // The recorded hash comes from disk rather than the renderer, so it reflects what was written.
+  const disk = await readRegionsFile(root);
+  const lastHash = disk.status === 'loaded' ? disk.generatedHash : null;
+  const handEdited = status === 'update' && lastHash !== null && lastHash !== existingHash;
+
+  return { ok: true, relativePath, status, existing, generated, handEdited, existingHash };
 }
 
 /**
- * Writes generated code. Refuses if the file isn't ours, or if it changed since the user approved
- * the preview, whose hash is `expectedHash`.
+ * Writes generated code, then saves the regions with a hash of what was written. Refuses if the
+ * file isn't ours, if it changed since the user approved the preview, whose hash is `expectedHash`,
+ * or if `regions.json` can't be updated afterward.
  */
 export async function writeExport(
   root: string,
@@ -100,8 +93,20 @@ export async function writeExport(
   if (preview.existingHash !== expectedHash) {
     return failure(`${preview.relativePath} changed after the preview. Review the changes again.`);
   }
+  const disk = await readRegionsFile(root);
+  if (disk.status === 'invalid') {
+    return failure(`${REGIONS_FILE} couldn't be read, so nothing was written. ${disk.message}`);
+  }
+
   if (preview.status !== 'unchanged') {
     await writeProjectFile(root, preview.relativePath, preview.generated);
   }
-  return { ok: true, relativePath: preview.relativePath, hash: hashText(preview.generated) };
+  const hash = hashText(preview.generated);
+  const saved = await saveRegions(root, data, hash);
+  if (!saved.ok) {
+    return failure(
+      `${preview.relativePath} was written, but saving the regions failed. ${saved.message}`,
+    );
+  }
+  return { ok: true, relativePath: preview.relativePath, hash };
 }
