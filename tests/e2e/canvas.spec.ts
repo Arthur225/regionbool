@@ -1,18 +1,12 @@
 /** Drives the real canvas with a real pointer, and reads results back through the UI. */
-import {
-  _electron as electron,
-  expect,
-  test,
-  type ElectronApplication,
-  type Page,
-} from '@playwright/test';
+import { expect, test, type ElectronApplication, type Page } from '@playwright/test';
+import { freshPage, launchApp } from './helpers';
 
 let app: ElectronApplication;
 let page: Page;
 
 test.beforeAll(async () => {
-  app = await electron.launch({ args: ['.'] });
-  page = await app.firstWindow();
+  ({ app, page } = await launchApp());
 });
 
 test.afterAll(async () => {
@@ -20,8 +14,7 @@ test.afterAll(async () => {
 });
 
 test.beforeEach(async () => {
-  await page.reload(); // Editor state lives only in the page for now.
-  await page.getByTestId('field-canvas').waitFor();
+  await freshPage(page);
 });
 
 /** Converts field meters to screen pixels using the SVG's own transform. */

@@ -1,7 +1,8 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { _electron as electron, expect, test, type ElectronApplication } from '@playwright/test';
+import { expect, test, type ElectronApplication } from '@playwright/test';
+import { launchApp } from './helpers';
 import type { RegionBoolApi } from '../../src/shared/ipc';
 import { sampleProject } from '../unit/fixtures/sampleProject';
 
@@ -43,7 +44,7 @@ async function chooseFolderInDialog(path: string | null): Promise<void> {
 }
 
 test.beforeAll(async () => {
-  app = await electron.launch({ args: ['.'] });
+  ({ app } = await launchApp());
 });
 
 test.afterAll(async () => {
@@ -68,12 +69,14 @@ test('the renderer has no direct access to Node or IPC', async () => {
   expect(exposed.process).toBe('undefined');
   // This list is everything the renderer can reach, so growing it should be a deliberate change.
   expect(exposed.bridgeKeys.sort()).toEqual([
+    'closeProject',
     'getAppInfo',
     'getCurrentProject',
     'getFieldImage',
     'listFields',
     'openProject',
     'previewExport',
+    'saveRegions',
     'writeExport',
   ]);
 });
@@ -122,7 +125,7 @@ test('a robot project opens, and generated code reaches disk only through the ex
   const details = page.getByTestId('project-details');
   await expect(details).toContainText('2026.1.1');
   await expect(details).toContainText('edu.wpi.first');
-  await expect(details).toContainText('frc.robot.generated');
+  await expect(page.getByTestId('output-package')).toHaveValue('frc.robot.generated');
 
   const target = join(root, 'src/main/java/frc/robot/generated/FieldRegions.java');
   const preview = await page.evaluate(

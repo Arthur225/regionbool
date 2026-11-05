@@ -18,6 +18,11 @@ export default tseslint.config(
     rules: reactHooks.configs.recommended.rules,
   },
   {
+    // Plain CommonJS scripts, which have to use require.
+    files: ['**/*.cjs'],
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
+  },
+  {
     // Invariant: shared code runs in every process and in tests, so it can't depend on any of them.
     files: ['src/shared/**'],
     rules: {

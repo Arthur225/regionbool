@@ -126,6 +126,37 @@ describe('deleting', () => {
   });
 });
 
+describe('unsaved changes', () => {
+  const dirty = () => editor().doc !== editor().savedDoc;
+
+  it('starts clean, and changes make it dirty', () => {
+    expect(dirty()).toBe(false);
+    editor().addShape(rect);
+    expect(dirty()).toBe(true);
+  });
+
+  it('is clean again after saving', () => {
+    editor().addShape(rect);
+    editor().markSaved(editor().doc);
+    expect(dirty()).toBe(false);
+  });
+
+  it('is clean again after undoing back to the saved version', () => {
+    editor().addShape(rect);
+    editor().markSaved(editor().doc);
+    editor().renameRegion(editor().doc.regions[0]!.id, 'Zone');
+    expect(dirty()).toBe(true);
+    editor().undo();
+    expect(dirty()).toBe(false);
+  });
+
+  it('treats a loaded document as saved', () => {
+    editor().addShape(rect);
+    editor().reset();
+    expect(dirty()).toBe(false);
+  });
+});
+
 describe('tools', () => {
   it('discards a half-drawn shape when changing tools', () => {
     editor().setTool('polygon');

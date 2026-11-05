@@ -5,10 +5,12 @@
  */
 import { create } from 'zustand';
 import type { AllianceState } from '../shared/geometry';
+import type { ProjectInfo } from '../shared/ipc';
 import { REGIONS_FILE_VERSION } from '../shared/model';
 import type {
   AllianceMode,
   FieldInfo,
+  OutputInfo,
   Point,
   Region,
   RegionProject,
@@ -49,8 +51,20 @@ function nextRegionName(regions: readonly Region[]): string {
   return `Region ${number}`;
 }
 
+/** A message shown across the top of the window until dismissed. */
+export interface Notice {
+  kind: 'info' | 'error';
+  title: string;
+  details: string[];
+}
+
 interface EditorState {
   doc: RegionProject;
+  /** The document as last saved. There are unsaved changes when `doc` is a different object. */
+  savedDoc: RegionProject;
+  /** The open robot project, or null. The main process holds the same one. */
+  project: ProjectInfo | null;
+  notice: Notice | null;
   past: RegionProject[];
   future: RegionProject[];
   /** The document when the current drag started, or null if not dragging. */
@@ -71,6 +85,10 @@ interface EditorState {
   /** Pointer position on the field, or null when off the canvas. */
   cursor: Point | null;
 
+  setProject(project: ProjectInfo | null): void;
+  setNotice(notice: Notice | null): void;
+  /** Records `doc` as saved, including any changes made while saving it. */
+  markSaved(doc: RegionProject): void;
   setTool(tool: Tool): void;
   setDrawMode(mode: ShapeMode): void;
   setSnapEnabled(enabled: boolean): void;
@@ -91,12 +109,13 @@ interface EditorState {
   setShapeMode(shapeId: string, mode: ShapeMode): void;
   deleteShape(shapeId: string): void;
   setField(field: FieldInfo): void;
+  setOutput(output: OutputInfo): void;
 
   beginGesture(): void;
   endGesture(): void;
   undo(): void;
   redo(): void;
-  /** Replaces everything with a fresh document. */
+  /** Replaces the document and clears history, treating the new document as saved. */
   reset(doc?: RegionProject): void;
 }
 
@@ -143,8 +162,12 @@ export const useEditor = create<EditorState>((set, get) => {
     }
   };
 
+  const emptyDocument = createEmptyDocument();
   return {
-    doc: createEmptyDocument(),
+    doc: emptyDocument,
+    savedDoc: emptyDocument,
+    project: null,
+    notice: null,
     ...initialTransient,
     tool: 'select',
     drawMode: 'add',
@@ -153,6 +176,9 @@ export const useEditor = create<EditorState>((set, get) => {
     testAlliance: 'blue',
     cursor: null,
 
+    setProject: (project) => set({ project }),
+    setNotice: (notice) => set({ notice }),
+    markSaved: (doc) => set({ doc, savedDoc: doc }),
     setTool: (tool) => set({ tool, draftPoints: [] }),
     setDrawMode: (drawMode) => set({ drawMode }),
     setSnapEnabled: (snapEnabled) => set({ snapEnabled }),
@@ -249,6 +275,7 @@ export const useEditor = create<EditorState>((set, get) => {
     },
 
     setField: (field) => commit((doc) => ({ ...doc, field })),
+    setOutput: (output) => commit((doc) => ({ ...doc, output })),
 
     beginGesture: () => set((state) => ({ gestureStart: state.doc })),
 
@@ -290,6 +317,6 @@ export const useEditor = create<EditorState>((set, get) => {
       });
     },
 
-    reset: (doc = createEmptyDocument()) => set({ doc, ...initialTransient }),
+    reset: (doc = createEmptyDocument()) => set({ doc, savedDoc: doc, ...initialTransient }),
   };
 });
