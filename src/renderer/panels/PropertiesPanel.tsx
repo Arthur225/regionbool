@@ -1,0 +1,271 @@
+/** The right panel: exact values for the selected shape, the field's settings and the point tester. */
+import { regionContainsForAlliance } from '../../shared/geometry';
+import type { ProjectInfo } from '../../shared/ipc';
+import { JAVA_PROFILES } from '../../shared/javaProfiles';
+import type { FieldSymmetry, PolygonShape, Shape } from '../../shared/model';
+import { regionColor } from '../canvas/FieldCanvas';
+import { useEditor } from '../store';
+import { NumberField } from './NumberField';
+
+function profileLabel(project: ProjectInfo): string {
+  const { id, confident, source } = project.profile;
+  if (!id) return 'Could not be determined';
+  const label = JAVA_PROFILES[id].label;
+  const basis = source === 'imports' ? 'from the project imports' : 'from GradleRIO';
+  return `${label}, ${basis}${confident ? '' : ' (needs confirming)'}`;
+}
+
+function VertexFields({ shape, update }: { shape: PolygonShape; update(shape: Shape): void }) {
+  return (
+    <>
+      {shape.points.map((point, index) => (
+        <div className="field-row" key={index}>
+          <NumberField
+            label={`P${index + 1} x`}
+            unit="m"
+            value={point.x}
+            onCommit={(x) =>
+              update({
+                ...shape,
+                points: shape.points.map((p, i) => (i === index ? { ...p, x } : p)),
+              })
+            }
+          />
+          <NumberField
+            label="y"
+            unit="m"
+            value={point.y}
+            onCommit={(y) =>
+              update({
+                ...shape,
+                points: shape.points.map((p, i) => (i === index ? { ...p, y } : p)),
+              })
+            }
+          />
+        </div>
+      ))}
+      {shape.kind === 'polygon' && (
+        <p className="hint">Double-click an edge to add a point, or a point to remove it.</p>
+      )}
+    </>
+  );
+}
+
+function ShapeFields({ shape }: { shape: Shape }) {
+  const update = useEditor.getState().updateShape;
+  switch (shape.kind) {
+    case 'rect':
+      return (
+        <>
+          <div className="field-row">
+            <NumberField
+              label="Center x"
+              unit="m"
+              testId="prop-cx"
+              value={shape.cx}
+              onCommit={(cx) => update({ ...shape, cx })}
+            />
+            <NumberField
+              label="y"
+              unit="m"
+              testId="prop-cy"
+              value={shape.cy}
+              onCommit={(cy) => update({ ...shape, cy })}
+            />
+          </div>
+          <div className="field-row">
+            <NumberField
+              label="Width"
+              unit="m"
+              min={0}
+              testId="prop-width"
+              value={shape.width}
+              onCommit={(width) => update({ ...shape, width })}
+            />
+            <NumberField
+              label="Height"
+              unit="m"
+              min={0}
+              testId="prop-height"
+              value={shape.height}
+              onCommit={(height) => update({ ...shape, height })}
+            />
+          </div>
+          <NumberField
+            label="Rotation"
+            unit="°"
+            testId="prop-rotation"
+            value={shape.rotationDeg}
+            onCommit={(rotationDeg) => update({ ...shape, rotationDeg })}
+          />
+        </>
+      );
+    case 'circle':
+      return (
+        <>
+          <div className="field-row">
+            <NumberField
+              label="Center x"
+              unit="m"
+              testId="prop-cx"
+              value={shape.cx}
+              onCommit={(cx) => update({ ...shape, cx })}
+            />
+            <NumberField
+              label="y"
+              unit="m"
+              testId="prop-cy"
+              value={shape.cy}
+              onCommit={(cy) => update({ ...shape, cy })}
+            />
+          </div>
+          <NumberField
+            label="Radius"
+            unit="m"
+            min={0}
+            testId="prop-radius"
+            value={shape.radius}
+            onCommit={(radius) => update({ ...shape, radius })}
+          />
+        </>
+      );
+    case 'triangle':
+    case 'polygon':
+      return <VertexFields shape={shape} update={update} />;
+  }
+}
+
+function PointTester() {
+  const doc = useEditor((s) => s.doc);
+  const testPoint = useEditor((s) => s.testPoint);
+  const testAlliance = useEditor((s) => s.testAlliance);
+  const editor = useEditor.getState();
+
+  return (
+    <section data-testid="point-tester">
+      <h2>Point tester</h2>
+      <div className="tool-group" role="group" aria-label="Test alliance">
+        {(['blue', 'red'] as const).map((alliance) => (
+          <button
+            key={alliance}
+            type="button"
+            className={testAlliance === alliance ? 'active' : ''}
+            aria-pressed={testAlliance === alliance}
+            onClick={() => editor.setTestAlliance(alliance)}
+          >
+            {alliance === 'blue' ? 'Blue' : 'Red'}
+          </button>
+        ))}
+      </div>
+      {!testPoint && <p className="hint">Click the field to place a point.</p>}
+      {testPoint && (
+        <>
+          <p className="test-position" data-testid="test-position">
+            ({testPoint.x}, {testPoint.y})
+          </p>
+          <ul className="test-results">
+            {doc.regions.map((region, index) => {
+              const inside = regionContainsForAlliance(
+                region,
+                testPoint.x,
+                testPoint.y,
+                testAlliance,
+                doc.field,
+              );
+              return (
+                <li key={region.id} data-testid="test-result">
+                  <span className="swatch" style={{ background: regionColor(index) }} />
+                  <span>{region.name}</span>
+                  <strong className={inside ? 'yes' : 'no'}>{inside ? 'Inside' : 'Outside'}</strong>
+                </li>
+              );
+            })}
+          </ul>
+          {testAlliance === 'red' &&
+            doc.regions.some((r) => r.allianceMode === 'alliance-relative') && (
+              <p className="hint">
+                Regions that flip are shown at their red position, with the drawn position faded.
+              </p>
+            )}
+        </>
+      )}
+    </section>
+  );
+}
+
+export function PropertiesPanel({ project }: { project: ProjectInfo | null }) {
+  const doc = useEditor((s) => s.doc);
+  const tool = useEditor((s) => s.tool);
+  const selectedRegionId = useEditor((s) => s.selectedRegionId);
+  const selectedShapeId = useEditor((s) => s.selectedShapeId);
+  const { field } = doc;
+  const editor = useEditor.getState();
+
+  const region = doc.regions.find((candidate) => candidate.id === selectedRegionId);
+  const shape = region?.shapes.find((candidate) => candidate.id === selectedShapeId);
+
+  return (
+    <aside className="panel properties-panel" aria-label="Properties">
+      {tool === 'test' && <PointTester />}
+
+      {shape && (
+        <section data-testid="shape-properties">
+          <h2>Shape</h2>
+          {/* Keyed so that selecting another shape starts with its own values. */}
+          <ShapeFields key={shape.id} shape={shape} />
+        </section>
+      )}
+
+      <section>
+        <h2>Field</h2>
+        <div className="field-row">
+          <NumberField
+            label="Length"
+            unit="m"
+            min={0}
+            testId="field-length"
+            value={field.lengthMeters}
+            onCommit={(lengthMeters) => editor.setField({ ...field, lengthMeters })}
+          />
+          <NumberField
+            label="Width"
+            unit="m"
+            min={0}
+            testId="field-width"
+            value={field.widthMeters}
+            onCommit={(widthMeters) => editor.setField({ ...field, widthMeters })}
+          />
+        </div>
+        <label className="inline-field">
+          Red side
+          <select
+            aria-label="Field symmetry"
+            value={field.symmetry}
+            onChange={(event) =>
+              editor.setField({ ...field, symmetry: event.target.value as FieldSymmetry })
+            }
+          >
+            <option value="rotational">Rotated 180°</option>
+            <option value="mirrored">Mirrored</option>
+          </select>
+        </label>
+      </section>
+
+      {project && (
+        <section>
+          <h2>Project</h2>
+          <dl data-testid="project-details">
+            <dt>Name</dt>
+            <dd>{project.name}</dd>
+            <dt>GradleRIO</dt>
+            <dd>{project.gradleRioVersion ?? 'Unknown'}</dd>
+            <dt>WPILib API</dt>
+            <dd>{profileLabel(project)}</dd>
+            <dt>Package</dt>
+            <dd>{project.defaultPackageName}</dd>
+          </dl>
+        </section>
+      )}
+    </aside>
+  );
+}
