@@ -9,6 +9,7 @@
     "src/preload/**/*",
     "src/shared/**/*",
     "tests/**/*",
+    "schemas/*.json",
     "electron.vite.config.ts",
     "vitest.config.mts",
     "playwright.config.ts"
