@@ -1,0 +1,48 @@
+# Editor
+
+The renderer has three parts: `store.ts` holds the state, `canvas/FieldCanvas.tsx` turns pointer input into changes, and `panels/` shows and edits the same state.
+
+## Coordinates
+
+The SVG's `viewBox` is in meters, so shapes are drawn at their real coordinates and the browser handles scaling. WPILib's +y points up the screen and SVG's points down, so `sy(y) = width - y` is the only conversion. Rectangles are drawn from `rectCorners` as polygons rather than with SVG transforms, which keeps rotation in one place.
+
+Handles and labels need a constant size on screen, so their sizes are divided by `pixelsPerMeter`, which is measured from the SVG.
+
+## State
+
+| State                                     | In undo history |
+| ----------------------------------------- | --------------- |
+| `doc`: the regions, field and output      | Yes             |
+| Selection, tool, draw mode, snap settings | No              |
+| Half-drawn polygon, point tester, cursor  | No              |
+
+`doc` is never mutated, so each undo step is just a reference to an earlier version. `beginGesture` and `endGesture` make one undo step out of many changes, which is used for drags and for typing in a region name. `undo` clears a selection that no longer exists.
+
+## Interaction
+
+| Tool           | Input                                                               |
+| -------------- | ------------------------------------------------------------------- |
+| Select (V)     | Drag a shape to move it, and drag handles to resize or rotate it    |
+| Rectangle (R)  | Drag between two corners                                            |
+| Circle (C)     | Drag from the center to the edge                                    |
+| Triangle (T)   | Click 3 points                                                      |
+| Polygon (P)    | Click points. Finish with a double-click, Enter, or the first point |
+| Test point (X) | Click to see which regions contain the point                        |
+
+Other keys: Esc cancels and returns to Select, Delete removes the selected shape, Cmd/Ctrl+Z undoes, and Cmd/Ctrl+Shift+Z or Ctrl+Y redoes. Shortcuts are ignored while typing in a field. On a selected polygon, double-clicking an edge adds a point and double-clicking a point removes it.
+
+Things to know when changing the canvas:
+
+- **Gestures keep their starting shape.** Each pointer move recalculates from it rather than adding to the current shape, so rounding can't accumulate.
+- **Pointer capture changes event targets.** After `setPointerCapture`, later events, including `dblclick`, report the SVG as their target. Use `pressedRef` to see what was actually pressed.
+- **The fill is separate from the click target.** A mask per region draws the area that counts as inside: adding shapes minus holes. Transparent outlines on top take the clicks, and holes are drawn last so they stay clickable.
+- **Drawing is clamped to the field, and moving isn't.** Shapes can be moved partly off the field on purpose.
+- **Coordinates are rounded** to the grid, or to the nearest millimeter with snap off, so generated code doesn't carry meaningless digits.
+
+## Point tester
+
+It calls `regionContainsForAlliance` from `geometry.ts`, which is the function proved to match generated Java, so its answer is what the robot code will return. On red, the map uses `flipShape` to show alliance-relative regions where they'll really be. A unit test checks that the flipped shapes match that function across the field.
+
+## Not yet in the editor
+
+Nothing is saved between runs until build step 5, and the field is a blank grid until build step 6. Zooming and panning aren't planned for v1.
