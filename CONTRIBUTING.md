@@ -23,6 +23,7 @@ Pull requests are merged by a person after review.
 ## Tests
 
 - **Unit tests** live in `tests/unit` and run with Vitest. Anything in `src/shared` should be covered here.
+- **Java checks** in `tests/unit` compile generated code, and they skip if there's no JDK or WPILib jars. A skip means unverified, so see [docs/testing.md](docs/testing.md).
 - **End-to-end tests** live in `tests/e2e` and drive the real Electron app with Playwright.
 
 ## Documentation
