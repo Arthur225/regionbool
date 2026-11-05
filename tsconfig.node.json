@@ -8,6 +8,7 @@
     "src/main/**/*",
     "src/preload/**/*",
     "src/shared/**/*",
+    "src/renderer/store.ts",
     "tests/**/*",
     "schemas/*.json",
     "electron.vite.config.ts",
