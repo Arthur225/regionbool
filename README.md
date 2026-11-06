@@ -90,4 +90,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). [AGENTS.md](AGENTS.md) maps the code and
 
 ## License
 
-No license has been chosen yet. Field images come from WPILib, and their license is unconfirmed. See [resources/fields/SOURCES.md](resources/fields/SOURCES.md).
+No license has been chosen yet. Field images come from WPILib and others, and aren't this project's work. See [resources/fields/SOURCES.md](resources/fields/SOURCES.md).

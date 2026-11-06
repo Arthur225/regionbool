@@ -2,7 +2,7 @@
 
 RegionBool is an Electron desktop app for FRC programmers. You draw regions on a field map using rectangles, circles, triangles and polygons, and the app generates a Java class in a WPILib robot project with one boolean method per region, answering "is this position inside the region?".
 
-**Current state:** all 7 build steps are done, and the repository is public. **The bundled image licenses are still unconfirmed and there's no project license,** so no installers have been released (see "Releases" in `CONTRIBUTING.md`).
+**Current state:** all 7 build steps are done, and the repository is public. **There's no project license yet,** so no installers have been released (see "Releases" in `CONTRIBUTING.md`).
 
 ## Commands
 
