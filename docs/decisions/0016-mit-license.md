@@ -4,7 +4,7 @@
 
 ## Decision
 
-RegionBool is under the MIT license, with the owner as copyright holder. Two exceptions are stated in `LICENSE`: `resources/fields` isn't covered, and Java code generated into a user's project belongs to that user, with no notice required.
+RegionBool is under the MIT license, with the owner and team UnderControl 1156 as copyright holders. Two exceptions are stated in `LICENSE`: `resources/fields` isn't covered, and Java code generated into a user's project belongs to that user, with no notice required.
 
 ## Why
 
