@@ -4,6 +4,7 @@ import {
   generateJava,
   InvalidProjectError,
   javaDouble,
+  normalizeJava,
 } from '../../src/shared/codegen';
 import { JAVA_PROFILES } from '../../src/shared/javaProfiles';
 import type { RegionProject } from '../../src/shared/model';
@@ -95,10 +96,18 @@ describe('generateJava', () => {
     expect(legacyJava).toContain('import edu.wpi.first.wpilibj.smartdashboard.Field2d;');
     expect(legacyJava).toContain('public static void publishTo(Field2d field)');
     expect(legacyJava).toContain('new Pose2d[xs.length + 1]');
+    expect(legacyJava).toContain('public static void publishToNetworkTables()');
+    expect(legacyJava).toContain(
+      'public static void forEachOutline(BiConsumer<String, Pose2d[]> consumer)',
+    );
+    expect(legacyJava).toContain('import edu.wpi.first.networktables.StructArrayPublisher;');
     expect(legacyJava).toContain('"isInAreaDoCentro 1 (hole)", false,');
     expect(legacyJava).toContain('"isInScoringZone 0", red,');
     expect(generateJava(sampleProject(), modern)).toContain(
       'import org.wpilib.smartdashboard.Field2d;',
+    );
+    expect(generateJava(sampleProject(), modern)).toContain(
+      'import org.wpilib.networktables.StructArrayPublisher;',
     );
   });
 
@@ -129,5 +138,48 @@ describe('generateJava', () => {
     expect(java).not.toContain('*/ static');
     expect(java).not.toContain('\\u000a');
     expect(java).not.toContain('{ evil');
+  });
+});
+
+describe('normalizeJava', () => {
+  it('ignores what a formatter changes', () => {
+    const generated = `// Header
+/** A very long comment on one line. */
+class A {
+  void b() { call(1, new double[] {1.0, 2.0}); }
+}
+`;
+    const formatted = `// Header
+/**
+ * A very long comment
+ * on one line.
+ */
+class A {
+  void b() {
+    call(
+        1,
+        new double[] {
+          1.0, 2.0
+        });
+  }
+}
+`;
+    expect(normalizeJava(formatted)).toBe(normalizeJava(generated));
+  });
+
+  it('still notices a change to the code', () => {
+    expect(normalizeJava('int a = 1;')).not.toBe(normalizeJava('int a = 2;'));
+    expect(normalizeJava('call(x);')).not.toBe(normalizeJava('call(y);'));
+  });
+
+  it('keeps string contents, including spaces and comment-like text', () => {
+    expect(normalizeJava('f("a b");')).not.toBe(normalizeJava('f("ab");'));
+    expect(normalizeJava('f("a // b");')).toBe('f("a // b");');
+    expect(normalizeJava('f("a /* b */ c");')).toBe('f("a /* b */ c");');
+    expect(normalizeJava('f("say \\"hi\\" // x");')).toBe('f("say \\"hi\\" // x");');
+  });
+
+  it('removes comments outside strings', () => {
+    expect(normalizeJava('int a; // note\n/* more */ int b;')).toBe('inta;intb;');
   });
 });

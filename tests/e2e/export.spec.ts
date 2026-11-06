@@ -160,11 +160,11 @@ test('warns before replacing hand edits, and shows them', async () => {
   await page.getByRole('button', { name: 'Done' }).click();
 
   const java = readFileSync(join(root, TARGET), 'utf8');
-  writeFileSync(join(root, TARGET), `${java}// my change\n`);
+  writeFileSync(join(root, TARGET), `${java}class MyChange {}\n`);
   await page.getByLabel('Region name').fill('Renamed');
   await exportButton().click();
   await expect(page.getByTestId('export-hand-edited')).toBeVisible();
-  await expect(page.getByTestId('export-diff')).toContainText('- // my change');
+  await expect(page.getByTestId('export-diff')).toContainText('- class MyChange {}');
   await expect(writeButton()).toHaveText('Replace edited file');
 });
 

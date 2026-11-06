@@ -147,16 +147,58 @@ describe('hand-edit detection', () => {
     expect(preview).toMatchObject({ ok: true, status: 'update', handEdited: false });
   });
 
+  /** The generated file with its line breaks changed, the way a code formatter would. */
+  function reformat(java: string): string {
+    return java
+      .replaceAll(' {\n', '\n{\n')
+      .replaceAll(', ', ',\n        ')
+      .replaceAll('   * <p>', '   *\n   * <p>');
+  }
+
+  it('does not flag a file that a formatter changed', async () => {
+    const root = await exported();
+    writeFileSync(join(root, TARGET), reformat(generated));
+    const preview = await previewExport(root, sampleProject(), 'legacy');
+    expect(preview).toMatchObject({ ok: true, status: 'unchanged', handEdited: false });
+  });
+
+  it('does not flag a reformatted file when the regions changed', async () => {
+    const root = await exported();
+    writeFileSync(join(root, TARGET), reformat(generated));
+    const changed = sampleProject();
+    changed.regions[0]!.name = 'New name';
+    const preview = await previewExport(root, changed, 'legacy');
+    expect(preview).toMatchObject({ ok: true, status: 'update', handEdited: false });
+  });
+
+  it('flags a real edit, even in a reformatted file', async () => {
+    const root = await exported();
+    const edited = reformat(generated).replace('16.54', '99.0');
+    expect(edited).not.toBe(reformat(generated));
+    writeFileSync(join(root, TARGET), edited);
+    const preview = await previewExport(root, sampleProject(), 'legacy');
+    expect(preview).toMatchObject({ ok: true, status: 'update', handEdited: true });
+  });
+
+  it('does not write over a reformatted file when nothing else changed', async () => {
+    const root = await exported();
+    const formatted = reformat(generated);
+    writeFileSync(join(root, TARGET), formatted);
+    const preview = await previewExport(root, sampleProject(), 'legacy');
+    await writeExport(root, sampleProject(), 'legacy', preview.ok ? preview.existingHash : '');
+    expect(readFileSync(join(root, TARGET), 'utf8')).toBe(formatted);
+  });
+
   it('flags a generated file that was edited, keeping its header', async () => {
     const root = await exported();
-    writeFileSync(join(root, TARGET), `${GENERATED_HEADER}\n// my edit\n`);
+    writeFileSync(join(root, TARGET), `${GENERATED_HEADER}\nclass MyEdit {}\n`);
     const preview = await previewExport(root, sampleProject(), 'legacy');
     expect(preview).toMatchObject({ ok: true, status: 'update', handEdited: true });
   });
 
   it('stops flagging once the edited file is replaced', async () => {
     const root = await exported();
-    writeFileSync(join(root, TARGET), `${GENERATED_HEADER}\n// my edit\n`);
+    writeFileSync(join(root, TARGET), `${GENERATED_HEADER}\nclass MyEdit {}\n`);
     const first = await previewExport(root, sampleProject(), 'legacy');
     await writeExport(root, sampleProject(), 'legacy', first.ok ? first.existingHash : '');
     const changed = sampleProject();

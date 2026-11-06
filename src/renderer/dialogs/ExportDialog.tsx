@@ -81,7 +81,7 @@ export function ExportDialog({ onClose }: { onClose(): void }) {
                   {doc.output.className}.{firstMethod}(pose)
                 </code>
                 <br />
-                <code>{doc.output.className}.publishTo(field2d)</code>
+                <code>{doc.output.className}.publishToNetworkTables()</code>
               </div>
             )}
           </>
@@ -146,6 +146,12 @@ export function ExportDialog({ onClose }: { onClose(): void }) {
                   <p className="dialog-warning" data-testid="export-hand-edited">
                     This file was edited after the last export. Writing will lose those edits, shown
                     in red below.
+                  </p>
+                )}
+                {preview.status === 'update' && (
+                  <p className="dialog-note" data-testid="export-formatter-note">
+                    If a formatter such as Spotless ran on this file, its line breaks also show
+                    below. They don&apos;t change what the code does.
                   </p>
                 )}
                 {preview.status !== 'unchanged' && preview.status !== 'not-generated' && (

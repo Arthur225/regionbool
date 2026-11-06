@@ -20,6 +20,8 @@ export interface JavaProfile {
   allianceImports: readonly string[];
   /** Imports for the Field2d helper, which every generated class has. */
   field2dImports: readonly string[];
+  /** Imports for publishing outlines as struct arrays, which every generated class does. */
+  networkTablesImports: readonly string[];
   /** A boolean Java expression that's true on red and false on blue or an unknown alliance. */
   isRedExpression: string;
 }
@@ -39,6 +41,10 @@ export const JAVA_PROFILES: Readonly<Record<JavaProfileId, JavaProfile>> = {
       'edu.wpi.first.wpilibj.DriverStation.Alliance',
     ],
     field2dImports: ['edu.wpi.first.wpilibj.smartdashboard.Field2d'],
+    networkTablesImports: [
+      'edu.wpi.first.networktables.NetworkTableInstance',
+      'edu.wpi.first.networktables.StructArrayPublisher',
+    ],
     isRedExpression: 'DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red',
   },
   modern: {
@@ -51,6 +57,10 @@ export const JAVA_PROFILES: Readonly<Record<JavaProfileId, JavaProfile>> = {
     ],
     allianceImports: ['org.wpilib.driverstation.Alliance', 'org.wpilib.driverstation.MatchState'],
     field2dImports: ['org.wpilib.smartdashboard.Field2d'],
+    networkTablesImports: [
+      'org.wpilib.networktables.NetworkTableInstance',
+      'org.wpilib.networktables.StructArrayPublisher',
+    ],
     isRedExpression: 'MatchState.getAlliance().orElse(Alliance.BLUE) == Alliance.RED',
   },
 };

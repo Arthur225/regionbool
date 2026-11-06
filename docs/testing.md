@@ -21,7 +21,7 @@ This is the main protection against the preview showing one thing while the robo
 2. Compiles it with `javac --release 17 -Xlint:all -Werror`, using small stubs in place of WPILib.
 3. Runs it over about 4,000 random points, plus points on and just beside each shape's vertices and edge midpoints, and their flipped positions.
 4. Compares each answer with `geometry.ts` for blue, red and an unknown alliance, through both overloads.
-5. Runs `publishTo` on each alliance and compares every outline point with the TypeScript.
+5. Runs `publishTo` and `publishToNetworkTables` on each alliance and compares every outline point with the TypeScript.
 
 Stubs are used so the test only needs a JDK. If the real API changes, the stubs won't notice, which is why the real WPILib test exists.
 
@@ -42,3 +42,5 @@ These tests skip rather than fail when their requirements are missing, so **a sk
 End-to-end tests replace `dialog.showOpenDialog` because a native dialog can't be driven by a test, so the real dialog is only exercised by hand.
 
 Playwright's debugger connection intercepts the close prompt, so `unsaved-prompt.spec.ts` launches Electron directly, using `unsaved-prompt-main.cjs`. To reset the editor in other tests, use `freshPage` from `helpers.ts`, which reloads without triggering the prompt.
+
+After changing generated code, it's worth a real check in a copy of a robot project, because stubs can't show how real WPILib and formatters behave: run `./gradlew spotlessApply` if the project uses Spotless, then a JUnit test that calls the generated methods, as in decision 0015.

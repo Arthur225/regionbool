@@ -52,7 +52,34 @@ function stubs(profile: JavaProfile): Record<string, string> {
         }
       }`,
   });
-  const geometry = (pkg: string) => ({
+  const networkTables = (pkg: string) => ({
+    [`${pkg.replaceAll('.', '/')}/Struct.java`]: `package ${pkg};
+      public interface Struct<T> {}`,
+    [`${pkg.replaceAll('.', '/')}/NetworkTableInstance.java`]: `package ${pkg};
+      public class NetworkTableInstance {
+        public static NetworkTableInstance getDefault() { return new NetworkTableInstance(); }
+        public <T> StructArrayTopic<T> getStructArrayTopic(String name, Struct<T> struct) {
+          return new StructArrayTopic<>(name);
+        }
+      }`,
+    [`${pkg.replaceAll('.', '/')}/StructArrayTopic.java`]: `package ${pkg};
+      public class StructArrayTopic<T> {
+        private final String name;
+        StructArrayTopic(String name) { this.name = name; }
+        public StructArrayPublisher<T> publish() { return new StructArrayPublisher<>(name); }
+      }`,
+    [`${pkg.replaceAll('.', '/')}/StructArrayPublisher.java`]: `package ${pkg};
+      public class StructArrayPublisher<T> {
+        private final String name;
+        StructArrayPublisher(String name) { this.name = name; }
+        public void set(T[] value) {
+          StringBuilder b = new StringBuilder(name);
+          for (T item : value) b.append('|').append(item);
+          System.out.println(b);
+        }
+      }`,
+  });
+  const geometry = (pkg: string, networkTablesPackage: string) => ({
     [`${pkg.replaceAll('.', '/')}/Translation2d.java`]: `package ${pkg};
       public class Translation2d {
         private final double x, y;
@@ -68,6 +95,9 @@ function stubs(profile: JavaProfile): Record<string, string> {
         public Translation2d getTranslation() { return t; }
         public double getX() { return t.getX(); }
         public double getY() { return t.getY(); }
+        public static final ${networkTablesPackage}.Struct<Pose2d> struct =
+            new ${networkTablesPackage}.Struct<>() {};
+        @Override public String toString() { return getX() + " " + getY(); }
       }`,
     [`${pkg.replaceAll('.', '/')}/Rotation2d.java`]: `package ${pkg};
       public class Rotation2d {
@@ -76,7 +106,8 @@ function stubs(profile: JavaProfile): Record<string, string> {
   });
   if (profile.id === 'legacy') {
     return {
-      ...geometry('edu.wpi.first.math.geometry'),
+      ...geometry('edu.wpi.first.math.geometry', 'edu.wpi.first.networktables'),
+      ...networkTables('edu.wpi.first.networktables'),
       ...field2d('edu.wpi.first.wpilibj.smartdashboard', 'edu.wpi.first.math.geometry'),
       'edu/wpi/first/wpilibj/DriverStation.java': `package edu.wpi.first.wpilibj;
         import java.util.Optional;
@@ -88,7 +119,8 @@ function stubs(profile: JavaProfile): Record<string, string> {
     };
   }
   return {
-    ...geometry('org.wpilib.math.geometry'),
+    ...geometry('org.wpilib.math.geometry', 'org.wpilib.networktables'),
+    ...networkTables('org.wpilib.networktables'),
     ...field2d('org.wpilib.smartdashboard', 'org.wpilib.math.geometry'),
     'org/wpilib/driverstation/Alliance.java': `package org.wpilib.driverstation;
       public enum Alliance { RED, BLUE }`,
@@ -144,7 +176,10 @@ function outlineHarness(project: RegionProject, profile: JavaProfile): string {
     legacy
       ? `edu.wpi.first.wpilibj.DriverStation.current = java.util.Optional.of(edu.wpi.first.wpilibj.DriverStation.Alliance.${color});`
       : `org.wpilib.driverstation.MatchState.current = java.util.Optional.of(org.wpilib.driverstation.Alliance.${color.toUpperCase()});`;
-  const publish = `${project.output.packageName}.${project.output.className}.publishTo(new ${pkg}.Field2d());`;
+  const generated = `${project.output.packageName}.${project.output.className}`;
+  const publish = `${generated}.publishTo(new ${pkg}.Field2d());
+        System.out.println("===");
+        ${generated}.publishToNetworkTables();`;
   return `public class OutlineHarness {
       public static void main(String[] args) {
         ${set('Blue')}
@@ -319,8 +354,17 @@ describe.skipIf(!hasJdk)('generated Java matches the preview', () => {
       // println ends lines with CRLF on Windows.
       const output = outlines.stdout.replaceAll('\r\n', '\n');
       const [blue, red] = output.trimEnd().split('---\n');
-      expect(blue!.trimEnd().split('\n')).toEqual(expectedOutlines(project, false));
-      expect(red!.trimEnd().split('\n')).toEqual(expectedOutlines(project, true));
+      for (const [text, isRed] of [
+        [blue!, false],
+        [red!, true],
+      ] as const) {
+        const [field2d, structs] = text.split('===\n');
+        const expected = expectedOutlines(project, isRed);
+        expect(field2d!.trimEnd().split('\n')).toEqual(expected);
+        expect(structs!.trimEnd().split('\n')).toEqual(
+          expected.map((line) => `RegionBool/${line}`),
+        );
+      }
     },
     60_000,
   );

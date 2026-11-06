@@ -154,7 +154,7 @@ const IN_POLYGON = `  private static boolean inPolygon(double x, double y, doubl
     return inside;
   }`;
 
-function field2dMethods(project: RegionProject, usesAlliance: boolean): string {
+function outlineMethods(project: RegionProject, usesAlliance: boolean): string {
   const d = javaDouble;
   const array = (values: number[]) => `new double[] {${values.map(d).join(', ')}}`;
   const calls = project.regions.flatMap((region) =>
@@ -167,7 +167,7 @@ function field2dMethods(project: RegionProject, usesAlliance: boolean): string {
           ? 'red, '
           : 'false, '
         : '';
-      return `    publishOutline(field, ${name}, ${flip}${array(outline.map((p) => p.x))}, ${array(outline.map((p) => p.y))});`;
+      return `    acceptOutline(consumer, ${name}, ${flip}${array(outline.map((p) => p.x))}, ${array(outline.map((p) => p.y))});`;
     }),
   );
   const flipY =
@@ -176,24 +176,62 @@ function field2dMethods(project: RegionProject, usesAlliance: boolean): string {
     ? `\n      if (flip) {\n        x = FIELD_LENGTH_METERS - x;${flipY}\n      }`
     : '';
   return `  /**
-   * Draws every region on a Field2d, so it shows in AdvantageScope, Glass or Elastic. Each shape
-   * becomes one object, and circles are approximated. This allocates, so call it at startup or when
-   * the alliance changes, not every loop. Shapes that flip use the alliance at the time of the call.
+   * Publishes every region to NetworkTables as struct arrays under RegionBool/, which is the format
+   * AdvantageScope recommends. This allocates, so call it at startup or when the alliance changes,
+   * not every loop. Shapes that flip use the alliance at the time of the call.
    */
-  public static void publishTo(Field2d field) {${usesAlliance ? '\n    boolean red = isRedAlliance();' : ''}
+  public static void publishToNetworkTables() {
+    forEachOutline(
+        (name, poses) ->
+            OUTLINE_PUBLISHERS
+                .computeIfAbsent(
+                    name,
+                    key ->
+                        NetworkTableInstance.getDefault()
+                            .getStructArrayTopic("RegionBool/" + key, Pose2d.struct)
+                            .publish())
+                .set(poses));
+  }
+
+  /**
+   * Draws every region on a Field2d, for Glass or Elastic. AdvantageScope warns about this format,
+   * so prefer publishToNetworkTables there. This allocates, so call it at startup or when the
+   * alliance changes, not every loop. Shapes that flip use the alliance at the time of the call.
+   */
+  public static void publishTo(Field2d field) {
+    forEachOutline((name, poses) -> field.getObject(name).setPoses(poses));
+  }
+
+  /**
+   * Passes each shape's name and closed outline to a consumer, for example to log it with your own
+   * logger. Circles are approximated. This allocates, so don't call it every loop.
+   */
+  public static void forEachOutline(BiConsumer<String, Pose2d[]> consumer) {${usesAlliance ? '\n    boolean red = isRedAlliance();' : ''}
 ${calls.join('\n')}
   }
 
-  private static void publishOutline(
-      Field2d field, String name, ${usesAlliance ? 'boolean flip, ' : ''}double[] xs, double[] ys) {
+  private static void acceptOutline(
+      BiConsumer<String, Pose2d[]> consumer, String name, ${usesAlliance ? 'boolean flip, ' : ''}double[] xs, double[] ys) {
     Pose2d[] poses = new Pose2d[xs.length + 1];
     for (int i = 0; i < poses.length; i++) {
       double x = xs[i % xs.length];
       double y = ys[i % ys.length];${flipBlock}
       poses[i] = new Pose2d(x, y, new Rotation2d());
     }
-    field.getObject(name).setPoses(poses);
+    consumer.accept(name, poses);
   }`;
+}
+
+/**
+ * Reduces Java source to what affects its behavior, by removing comments and whitespace outside
+ * string literals. Formatters such as Spotless often run on generated files, so comparisons use this
+ * to tell reformatting apart from a real edit.
+ */
+export function normalizeJava(source: string): string {
+  return source.replace(
+    /("(?:\\.|[^"\\\n])*")|\/\*[\s\S]*?\*\/|\/\/[^\n]*|\s+/g,
+    (_, text?: string) => text ?? '',
+  );
 }
 
 /**
@@ -213,6 +251,10 @@ export function generateJava(project: RegionProject, profile: JavaProfile): stri
   const imports = [
     ...profile.geometryImports,
     ...profile.field2dImports,
+    ...profile.networkTablesImports,
+    'java.util.HashMap',
+    'java.util.Map',
+    'java.util.function.BiConsumer',
     ...(usesAlliance ? profile.allianceImports : []),
   ]
     .sort()
@@ -242,6 +284,10 @@ export function generateJava(project: RegionProject, profile: JavaProfile): stri
     });
   });
 
+  constants.push(
+    '  private static final Map<String, StructArrayPublisher<Pose2d>> OUTLINE_PUBLISHERS =\n      new HashMap<>();',
+  );
+
   const helpers: string[] = [];
   if (usesAlliance) {
     helpers.push(
@@ -258,7 +304,7 @@ export function generateJava(project: RegionProject, profile: JavaProfile): stri
     constants.join('\n'),
     `  private ${output.className}() {}`,
     ...regions.map((region, index) => regionMethods(project, region, index)),
-    field2dMethods(project, usesAlliance),
+    outlineMethods(project, usesAlliance),
     ...helpers,
   ];
 
