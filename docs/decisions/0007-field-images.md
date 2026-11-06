@@ -12,4 +12,4 @@ WPILib has field images only as private files inside Elastic, at a path that var
 
 ## Consequences
 
-Each bundled image's license must be checked before a public release, and any that can't be cleared are dropped. A new season needs an app update or an import.
+Bundled images are recorded with their sources in `resources/fields/SOURCES.md`. A new season needs an app update or an import.

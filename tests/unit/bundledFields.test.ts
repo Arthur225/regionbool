@@ -43,8 +43,8 @@ describe('bundled fields', () => {
     expect(sources, 'list the image in SOURCES.md').toContain(`\`${field!.imageFile}\``);
   });
 
-  it('warns that licenses are unconfirmed until someone resolves that', () => {
-    // Remove this test deliberately, when the licenses have actually been confirmed.
+  it("records that the images' licenses are unconfirmed", () => {
+    // The images aren't this project's work, so their status has to stay accurate. See decision 0014.
     expect(sources).toContain('License status: unconfirmed');
   });
 });
