@@ -1,6 +1,6 @@
 # Bundled field sources
 
-**License status: unconfirmed. Don't release these images publicly until this is resolved.**
+**License status: unconfirmed.** The repository's owner chose to make it public on 2026-11-04 with these images included, knowing this. Resolve it before publishing installers.
 
 All images and field sizes come from WPILib's [allwpilib](https://github.com/wpilibsuite/allwpilib) repository at commit `7eef4eb32adacfa535bad21847e8786ca81f7e9c`, in `fields/src/main/native/resources/org/wpilib/fields/frc/`.
 

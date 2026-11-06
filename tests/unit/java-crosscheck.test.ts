@@ -316,7 +316,9 @@ describe.skipIf(!hasJdk)('generated Java matches the preview', () => {
         encoding: 'utf8',
       });
       expect(outlines.status, outlines.stderr).toBe(0);
-      const [blue, red] = outlines.stdout.trimEnd().split('---\n');
+      // println ends lines with CRLF on Windows.
+      const output = outlines.stdout.replaceAll('\r\n', '\n');
+      const [blue, red] = output.trimEnd().split('---\n');
       expect(blue!.trimEnd().split('\n')).toEqual(expectedOutlines(project, false));
       expect(red!.trimEnd().split('\n')).toEqual(expectedOutlines(project, true));
     },

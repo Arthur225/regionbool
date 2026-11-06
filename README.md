@@ -1,3 +1,85 @@
 # RegionBool
 
-Draw regions on an FRC field and generate boolean Java methods for your WPILib robot project.
+Draw regions on an FRC field, and get a boolean Java method for each one in your WPILib robot project.
+
+Instead of hand-writing and guessing at coordinate checks, you draw the area on the field, check it with a test point, and call the generated method:
+
+```java
+if (FieldRegions.isInScoringZone(drivetrain.getPose())) {
+  // The robot is in the scoring zone.
+}
+```
+
+![The RegionBool editor, with two regions drawn on the 2026 field](docs/images/editor.png)
+
+## Features
+
+- **Shapes:** rectangles, circles, triangles and free polygons, all rotatable. Combine shapes in one region, and cut holes out of it.
+- **Alliance handling:** set each region to flip on red or stay fixed on the field. The generated code flips the right way for that season.
+- **Point tester:** click the field to see which regions contain a point, on either alliance. It uses the same math as the generated code, and a test compares the two.
+- **Safe export:** you see a diff before anything is written. RegionBool won't replace a file it didn't generate.
+- **Field images:** 2022 to 2026 are included, or import your own image.
+- **Field2d helper:** generated classes can draw their regions on a `Field2d`.
+- **Made for teams:** regions are saved in your project as readable JSON, so they go through git like the rest of your code.
+
+## Install
+
+Download the installer for your system from the [releases page](https://github.com/Arthur225/regionbool/releases).
+
+| System  | File                                                                             |
+| ------- | -------------------------------------------------------------------------------- |
+| Windows | `RegionBool-<version>-win-x64.exe`                                               |
+| macOS   | `RegionBool-<version>-mac-arm64.dmg` for Apple Silicon, `-mac-x64.dmg` for Intel |
+| Linux   | `RegionBool-<version>-linux-x86_64.AppImage`                                     |
+
+Builds aren't signed with a developer certificate yet, so your system will warn you:
+
+- **Windows:** on the SmartScreen warning, choose **More info**, then **Run anyway**.
+- **macOS:** the system may refuse to open the app, or call it damaged. After dragging it to Applications, run this:
+
+  ```bash
+  xattr -cr /Applications/RegionBool.app
+  ```
+
+- **Linux:** mark the AppImage as executable, then run it.
+
+## How to use it
+
+1. **Open your robot project** with **Open robot project**. RegionBool works out which WPILib imports your project uses.
+2. **Pick the field** in the right panel. 2025 and 2026 have separate welded and AndyMark fields, because their sizes differ. Check which your event uses.
+3. **Draw.** Pick a shape tool and draw on the field. Your first shape creates a region. Use **Cut hole** to subtract from it, and the panels on either side to rename it or type exact values.
+4. **Check it.** Use **Test point** and click the field, trying both Blue and Red. The field image is a guide, so type exact values when precision matters.
+5. **Export.** **Export Java** shows what will change, and **Write file** writes it. By default that's `src/main/java/frc/robot/generated/FieldRegions.java`.
+6. **Commit** both the generated class and the `.regionbool` folder, so your team can keep editing the regions.
+
+![The export dialog, showing a diff of the changes](docs/images/export.png)
+
+### Using the generated code
+
+Each region gets two methods, taking a `Pose2d` or a `Translation2d`. Region checks don't allocate, so they're safe to call every loop.
+
+```java
+boolean inZone = FieldRegions.isInScoringZone(pose);
+boolean pieceInZone = FieldRegions.isInScoringZone(gamePieceTranslation);
+```
+
+To see your regions in AdvantageScope, Glass or Elastic, draw them on a `Field2d`. This one does allocate, so call it at startup or when your alliance changes, not every loop:
+
+```java
+FieldRegions.publishTo(field2d);
+```
+
+### Good to know
+
+- **Alliance:** regions that flip use the alliance from WPILib. Until the alliance is known, they act as if you're on blue.
+- **Edges:** a point exactly on an edge counts as inside a shape, so a point exactly on a hole's edge is outside the region.
+- **After a `git pull`:** reopen the project before saving, because RegionBool doesn't notice `regions.json` changing while it's open.
+- **WPILib versions:** 2025, 2026 and the 2027 alphas are supported. The 2027 API is still changing, so a later alpha may need an update.
+
+## Development
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). [AGENTS.md](AGENTS.md) maps the code and lists the rules it follows, for developers and AI agents alike.
+
+## License
+
+No license has been chosen yet. Field images come from WPILib, and their license is unconfirmed. See [resources/fields/SOURCES.md](resources/fields/SOURCES.md).

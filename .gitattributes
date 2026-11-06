@@ -1,0 +1,4 @@
+# Keep LF everywhere, so the formatting check passes on Windows too.
+* text=auto eol=lf
+*.png binary
+*.jpg binary

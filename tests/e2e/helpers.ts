@@ -8,8 +8,12 @@ import { _electron as electron, type ElectronApplication, type Page } from '@pla
  * Launches the app with native dialogs replaced, since a test can't drive them. The unsaved-changes
  * prompt answers "close without saving" unless a test changes it, so closing never hangs.
  */
-export async function launchApp(): Promise<{ app: ElectronApplication; page: Page }> {
-  const app = await electron.launch({ args: ['.'] });
+export async function launchApp(
+  executablePath?: string,
+): Promise<{ app: ElectronApplication; page: Page }> {
+  const app = await electron.launch(
+    executablePath ? { executablePath, args: [] } : { args: ['.'] },
+  );
   await setUnsavedPromptAnswer(app, 0);
   const page = await app.firstWindow();
   await waitForEditor(page);

@@ -99,3 +99,5 @@ The model and code generator are pure functions in `src/shared`, so they can be 
 ## Build tooling
 
 `electron-vite` bundles all three processes into `out/`. The preload script is emitted as CommonJS, which sandboxed preload scripts require. That's why `package.json` doesn't set `"type": "module"`.
+
+`electron-builder` then packages `out/` into installers, following `electron-builder.yml`. `resources/fields` is copied outside the app archive into Electron's resources folder, where `bundledFieldsDir` in `src/main/ipc.ts` finds it. The renderer's libraries are bundled by Vite, so they're dev dependencies. Only what the main process loads at run time, currently `ajv`, belongs in `dependencies`.
