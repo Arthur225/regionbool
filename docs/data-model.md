@@ -58,7 +58,7 @@ There are two layers, because files can be edited by hand or come from anywhere:
 - **A file that can't be understood is never overwritten.** That covers broken JSON, a schema failure and a newer version. The app shows why, and saving and exporting are refused until someone fixes or removes the file.
 - **`fieldId`** names the field definition in use. Changing the size by hand removes it, because the image would no longer match. If the definition can't be found, the saved size and symmetry still apply, on a blank grid.
 - **`javaProfile`** is the WPILib API chosen in the export dialog. Without it, the app detects one.
-- **`generatedHash`** is a SHA-256 of the Java file from the last export, used to notice hand edits. The main process owns it: it never goes to the renderer, and any value the renderer sends is ignored.
+- **`generatedHash`** is a SHA-256 of the Java code from the last export, ignoring comments and formatting, used to notice hand edits. The main process owns it: it never goes to the renderer, and any value the renderer sends is ignored.
 - **Formatting is stable,** with 2-space indentation and a final newline, so git diffs stay readable.
 
 The app doesn't notice this file changing while it's open, such as from a `git pull`. The next save replaces it, so reopen the project after pulling.

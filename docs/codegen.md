@@ -8,20 +8,36 @@
 2. Package and imports, including alliance imports only if a region needs them
 3. Private constants: the edge tolerance, field size if flipping needs it, and one pair of arrays per polygon
 4. Two public methods per region, taking `Pose2d` and `Translation2d`. The `Pose2d` one delegates
-5. `publishTo(Field2d)`, which draws the regions (see below)
-6. Private helpers, only those the project uses: `isRedAlliance`, `inRect`, `inCircle`, `inPolygon`, plus `publishOutline`
+5. `publishToNetworkTables()`, `publishTo(Field2d)` and `forEachOutline(consumer)`, which expose the outlines (see below)
+6. Private helpers, only those the project uses: `isRedAlliance`, `inRect`, `inCircle`, `inPolygon`, plus `acceptOutline`
 
-## Field2d helper
+## Publishing outlines
 
-`publishTo(Field2d field)` makes regions visible in AdvantageScope, Glass or Elastic. Each shape becomes one `FieldObject2d`, named like `isInScoringZone 0` or `isInScoringZone 1 (hole)`, holding a closed path of poses. Circles become 32-sided polygons, so that outline is only an approximation of what the check uses.
+Each shape has an outline: a closed path of poses, named like `isInScoringZone 0` or `isInScoringZone 1 (hole)`. Circles become 32-sided polygons, so that outline only approximates what the check uses, and a hole appears as an outline rather than a cutout. There are three ways to get them:
 
-It allocates, so it's meant for startup or when the alliance changes, not every loop. Alliance-relative shapes are drawn using the alliance at the time of the call, so call it again once the alliance is known. Outlines are always shown as separate paths, so a hole appears as an outline rather than a cutout.
+| Method                     | Use for             | Format                                                                                          |
+| -------------------------- | ------------------- | ----------------------------------------------------------------------------------------------- |
+| `publishToNetworkTables()` | AdvantageScope      | `Pose2d` struct arrays under `RegionBool/`                                                      |
+| `publishTo(Field2d)`       | Glass, Elastic      | WPILib's `Field2d`, a plain `double[]` that AdvantageScope says it will stop supporting in 2027 |
+| `forEachOutline(consumer)` | A team's own logger | Whatever the consumer does                                                                      |
+
+All of them allocate, so they're meant for startup or when the alliance changes, not every loop. Alliance-relative shapes use the alliance at the time of the call.
+
+## Formatters
+
+Teams often run Spotless or google-java-format over their whole project, including the generated class. Matching any formatter's output exactly isn't practical, so `normalizeJava` removes comments and whitespace outside strings, and comparisons use that:
+
+- A file that only differs in formatting counts as `unchanged`, and isn't rewritten.
+- The hash in `regions.json` is of the normalized code, so reformatting doesn't look like a hand edit.
+- A comment-only edit isn't detected, since it doesn't change behavior.
+
+The export diff still compares text, so a reformatted file shows line-break differences when something else changed. The dialog says so.
 
 ## Rules
 
 - **Formulas match `geometry.ts` exactly.** A change in one needs the same change in the other, and `tests/unit/java-crosscheck.test.ts` proves they agree.
 - **Numbers keep their exact value.** JavaScript prints the shortest text that reads back as the same double, so `javaDouble` output is identical in Java. A rectangle's sine and cosine are embedded rather than computed, because `Math.cos` can round differently between languages.
-- **Region checks don't allocate.** This doesn't apply to `publishTo`. Polygon vertices live in constants, and checks use primitive math. The one exception is outside our control: for alliance-relative regions, WPILib's `getAlliance()` returns an `Optional`.
+- **Region checks don't allocate.** This doesn't apply to the methods that publish outlines. Polygon vertices live in constants, and checks use primitive math. The one exception is outside our control: for alliance-relative regions, WPILib's `getAlliance()` returns an `Optional`.
 - **Output is deterministic,** with no timestamps, so regenerating produces clean diffs.
 - **Project text can't inject code.** Package and class names must pass validation, method names contain only ASCII letters and digits, and `commentSafe` reduces region names to plain ASCII before they go in comments. That removes backslashes too, because Java reads unicode escapes like `\u000a` even inside comments.
 - **Generated code stays within Java 17,** which is the lowest version the supported projects use. 2027 alphas require a newer JDK, but Java 17 source compiles there too.

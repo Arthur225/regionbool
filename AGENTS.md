@@ -114,7 +114,7 @@ Each step is one branch and one pull request. The full reasoning is in `docs/dec
 
 **Add a season's field:** follow `docs/fields.md`, including checking the image's orientation by eye.
 
-**Change generated Java:** edit `src/shared/codegen.ts`, and `geometry.ts` too if the math changes. Run `npm test`, then review the snapshot diff before accepting it with `npx vitest run -u`.
+**Change generated Java:** remember teams may run formatters over it, so `normalizeJava` must still see only real edits. Edit `src/shared/codegen.ts`, and `geometry.ts` too if the math changes. Run `npm test`, then review the snapshot diff before accepting it with `npx vitest run -u`.
 
 **Add or update a WPILib profile:** follow the steps in `docs/codegen.md`.
 

@@ -19,7 +19,7 @@ if (FieldRegions.isInScoringZone(drivetrain.getPose())) {
 - **Point tester:** click the field to see which regions contain a point, on either alliance. It uses the same math as the generated code, and a test compares the two.
 - **Safe export:** you see a diff before anything is written. RegionBool won't replace a file it didn't generate.
 - **Field images:** 2022 to 2026 are included, or import your own image.
-- **Field2d helper:** generated classes can draw their regions on a `Field2d`.
+- **See your regions in dashboards:** generated classes can publish their outlines for AdvantageScope, Glass or Elastic.
 - **Made for teams:** regions are saved in your project as readable JSON, so they go through git like the rest of your code.
 
 ## Install
@@ -63,10 +63,17 @@ boolean inZone = FieldRegions.isInScoringZone(pose);
 boolean pieceInZone = FieldRegions.isInScoringZone(gamePieceTranslation);
 ```
 
-To see your regions in AdvantageScope, Glass or Elastic, draw them on a `Field2d`. This one does allocate, so call it at startup or when your alliance changes, not every loop:
+To see your regions in a dashboard, publish their outlines. These allocate, so call them at startup or when your alliance changes, not every loop.
 
 ```java
+// AdvantageScope: find them under RegionBool in the sidebar, and add them to a 2D Field tab.
+FieldRegions.publishToNetworkTables();
+
+// Glass or Elastic. AdvantageScope warns about this older format.
 FieldRegions.publishTo(field2d);
+
+// Your own logger, such as AdvantageKit.
+FieldRegions.forEachOutline((name, poses) -> Logger.recordOutput("Regions/" + name, poses));
 ```
 
 ### Good to know
@@ -74,6 +81,7 @@ FieldRegions.publishTo(field2d);
 - **Alliance:** regions that flip use the alliance from WPILib. Until the alliance is known, they act as if you're on blue.
 - **Edges:** a point exactly on an edge counts as inside a shape, so a point exactly on a hole's edge is outside the region.
 - **After a `git pull`:** reopen the project before saving, because RegionBool doesn't notice `regions.json` changing while it's open.
+- **Formatters:** Spotless and similar tools can reformat the generated class safely. RegionBool ignores formatting and comments when it checks for hand edits.
 - **WPILib versions:** 2025, 2026 and the 2027 alphas are supported. The 2027 API is still changing, so a later alpha may need an update.
 
 ## Development

@@ -16,3 +16,4 @@ Short notes on why the project is built the way it is. Add a new numbered file f
 - [0012: Keep paths and code out of the renderer](0012-renderer-sends-data-only.md)
 - [0013: Protect team work in saved files](0013-protect-saved-work.md)
 - [0014: Bundle WPILib's field images, with license unconfirmed](0014-field-image-sources.md)
+- [0015: Publish struct outlines, and ignore formatting in hand-edit checks](0015-struct-outlines-and-formatters.md)
