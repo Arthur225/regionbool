@@ -5,7 +5,7 @@
  * the file schema here, and `generateJava` runs the semantic checks.
  */
 import { readFile } from 'node:fs/promises';
-import { generateJava, InvalidProjectError } from '../shared/codegen';
+import { generateJava, InvalidProjectError, normalizeJava } from '../shared/codegen';
 import type { ExportFileStatus, ExportPreviewResult, ExportWriteResult } from '../shared/ipc';
 import { JAVA_PROFILES, type JavaProfileId } from '../shared/javaProfiles';
 import type { RegionProject } from '../shared/model';
@@ -36,7 +36,7 @@ async function readIfExists(path: string): Promise<string | null> {
 function fileStatus(existing: string | null, generated: string): ExportFileStatus {
   if (existing === null) return 'new';
   if (!hasGeneratedHeader(existing)) return 'not-generated';
-  return existing === generated ? 'unchanged' : 'update';
+  return normalizeJava(existing) === normalizeJava(generated) ? 'unchanged' : 'update';
 }
 
 /** Generates code and compares it with the file on disk, without writing anything. */
@@ -67,7 +67,11 @@ export async function previewExport(
   // The recorded hash comes from disk rather than the renderer, so it reflects what was written.
   const disk = await readRegionsFile(root);
   const lastHash = disk.status === 'loaded' ? disk.generatedHash : null;
-  const handEdited = status === 'update' && lastHash !== null && lastHash !== existingHash;
+  const handEdited =
+    status === 'update' &&
+    existing !== null &&
+    lastHash !== null &&
+    lastHash !== hashText(normalizeJava(existing));
 
   return { ok: true, relativePath, status, existing, generated, handEdited, existingHash };
 }
@@ -101,7 +105,7 @@ export async function writeExport(
   if (preview.status !== 'unchanged') {
     await writeProjectFile(root, preview.relativePath, preview.generated);
   }
-  const hash = hashText(preview.generated);
+  const hash = hashText(normalizeJava(preview.generated));
   const saved = await saveRegions(root, data, hash);
   if (!saved.ok) {
     return failure(

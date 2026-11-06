@@ -104,7 +104,7 @@ export type OpenProjectResult =
 export type ExportFileStatus =
   /** No file there yet. */
   | 'new'
-  /** Identical to what would be written. */
+  /** The same as what would be written, ignoring comments and formatting. */
   | 'unchanged'
   /** A previously generated file that would be replaced. */
   | 'update'
@@ -123,7 +123,8 @@ export type ExportPreviewResult =
       /** What would be written. */
       generated: string;
       /**
-       * True if the file was changed since the last export, so writing would lose those edits.
+       * True if the code was changed since the last export, so writing would lose those edits.
+       * Reformatting doesn't count, because tools such as Spotless often run on generated files.
        * Only known when `regions.json` recorded a hash for that export.
        */
       handEdited: boolean;
