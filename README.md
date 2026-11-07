@@ -2,7 +2,7 @@
 
 Draw regions on an FRC field, and get a boolean Java method for each one in your WPILib robot project.
 
-Instead of hand-writing and guessing at coordinate checks, you draw the area on the field, check it with a test point, and call the generated method:
+Instead of hand-writing and guessing at coordinate checks, you draw the area on the field and call the generated method:
 
 ```java
 if (FieldRegions.isInScoringZone(drivetrain.getPose())) {
