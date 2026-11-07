@@ -41,10 +41,6 @@ This builds the app into `release/` for your system and tests the packaged resul
 
 ## Releases
 
-**Before publishing the first installers:**
-
-- Choose a license for this project, and update `package.json` and the README. Exclude the bundled field images, which aren't this project's work. See `resources/fields/SOURCES.md`.
-
 To release:
 
 1. Update `version` in `package.json`, and merge it.

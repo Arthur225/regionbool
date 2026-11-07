@@ -7,6 +7,8 @@ directories:
 files:
   - out/**
   - package.json
+  # MIT requires the notice to travel with copies of the software.
+  - LICENSE
 extraResources:
   # Read at run time from Electron's resources folder. See bundledFieldsDir in src/main/ipc.ts.
   - from: resources/fields

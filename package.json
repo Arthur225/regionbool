@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "description": "Draw FRC field regions and generate boolean Java methods for WPILib projects",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "SEE LICENSE IN LICENSE",
   "main": "./out/main/index.js",
   "engines": {
     "node": ">=22.12.0"
@@ -50,5 +50,5 @@
     "vitest": "^5.1.0",
     "zustand": "^5.0.16"
   },
-  "author": "RegionBool contributors"
+  "author": "Arthur Rodrigues Andrade and UnderControl 1156"
 }
