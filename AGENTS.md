@@ -38,7 +38,7 @@ Every path in this table must exist. `tests/unit/docs.test.ts` fails if one does
 | `src/preload/api.d.ts`                       | Type declaration for `window.regionbool`                                  |
 | `src/shared/ipc.ts`                          | IPC channel names and types, the full renderer-to-main contract           |
 | `src/shared/model.ts`                        | Region types and validation                                               |
-| `src/shared/geometry.ts`                     | Point-in-region math used by the preview                                  |
+| `src/shared/geometry.ts`                     | The reference definition of "inside", checked against generated Java      |
 | `src/shared/javaProfiles.ts`                 | What generated code needs for each WPILib version                         |
 | `src/shared/fields.ts`                       | Field definition format and parser                                        |
 | `src/shared/codegen.ts`                      | Generates the Java class                                                  |
@@ -47,7 +47,7 @@ Every path in this table must exist. `tests/unit/docs.test.ts` fails if one does
 | `src/shared/shapeOps.ts`                     | Pure shape edits: move, rotate, resize, flip, snap                        |
 | `src/renderer/store.ts`                      | Editor state and undo                                                     |
 | `src/renderer/canvas/FieldCanvas.tsx`        | The field map and all pointer handling                                    |
-| `src/renderer/panels/`                       | Toolbar, region list, properties and point tester                         |
+| `src/renderer/panels/`                       | Toolbar, region list and properties                                       |
 | `src/renderer/actions.ts`                    | Opening and saving, which involve both processes                          |
 | `src/renderer/dialogs/ExportDialog.tsx`      | Export preview, warnings and writing                                      |
 | `src/renderer/dialogs/FieldImportDialog.tsx` | Importing an image and marking the field's corners                        |
@@ -81,7 +81,7 @@ Breaking one of these is a bug even if the tests pass. Rules marked (lint) are e
 4. **The window stays sandboxed:** `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`. An end-to-end test checks this.
 5. **All coordinates are WPILib field coordinates in meters:** blue-origin, +x toward red, +y to the left. Pixels exist only in the rendering layer.
 
-6. **The app preview and generated Java must agree on every point.** A change to `geometry.ts` needs the same change in `codegen.ts`, and `tests/unit/java-crosscheck.test.ts` proves they match.
+6. **`geometry.ts` and generated Java must agree on every point.** A change to `geometry.ts` needs the same change in `codegen.ts`, and `tests/unit/java-crosscheck.test.ts` proves they match.
 7. **Generated region checks don't allocate,** because robot code calls them every loop. WPILib's `getAlliance()` is the only exception.
 8. **Text from project files never reaches generated code unvalidated.** See `docs/codegen.md`.
 9. **Check WPILib APIs against the real jars or sources, not memory.** They differ between alphas.
@@ -95,15 +95,15 @@ Breaking one of these is a bug even if the tests pass. Rules marked (lint) are e
 
 Each step is one branch and one pull request. The full reasoning is in `docs/decisions/`.
 
-| Step | Scope                                                   | Status |
-| ---- | ------------------------------------------------------- | ------ |
-| 1    | Electron scaffold, security settings, tooling, docs     | Done   |
-| 2    | Data model, geometry, codegen, import profiles          | Done   |
-| 3    | Project detection, safe writer, field loading, IPC      | Done   |
-| 4    | Canvas, drawing tools, region panel, undo, point tester | Done   |
-| 5    | Export with diff, save and load, Field2d helper         | Done   |
-| 6    | Bundled fields and custom field import                  | Done   |
-| 7    | Packaging, release workflow, user README                | Done   |
+| Step | Scope                                               | Status |
+| ---- | --------------------------------------------------- | ------ |
+| 1    | Electron scaffold, security settings, tooling, docs | Done   |
+| 2    | Data model, geometry, codegen, import profiles      | Done   |
+| 3    | Project detection, safe writer, field loading, IPC  | Done   |
+| 4    | Canvas, drawing tools, region panel, undo           | Done   |
+| 5    | Export with diff, save and load, Field2d helper     | Done   |
+| 6    | Bundled fields and custom field import              | Done   |
+| 7    | Packaging, release workflow, user README            | Done   |
 
 ## Common changes
 

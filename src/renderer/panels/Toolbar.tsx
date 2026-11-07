@@ -15,17 +15,6 @@ const TOOLS: { tool: Tool; label: string; key: string; icon: ReactNode }[] = [
   { tool: 'circle', label: 'Circle', key: 'C', icon: <circle cx="12" cy="12" r="8" /> },
   { tool: 'triangle', label: 'Triangle', key: 'T', icon: <path d="M12 4l9 16H3z" /> },
   { tool: 'polygon', label: 'Polygon', key: 'P', icon: <path d="M12 3l9 7-3 11H6L3 10z" /> },
-  {
-    tool: 'test',
-    label: 'Test point',
-    key: 'X',
-    icon: (
-      <>
-        <circle cx="12" cy="12" r="7" />
-        <path d="M12 2v5M12 17v5M2 12h5M17 12h5" />
-      </>
-    ),
-  },
 ];
 
 export function Toolbar({ onExport }: { onExport(): void }) {

@@ -86,7 +86,6 @@ Drawing on the canvas changes the region model, and everything else is derived f
 ```mermaid
 flowchart LR
   D["Draw on canvas"] --> M["Region model<br/>(meters)"]
-  M --> P["Point tester<br/>geometry.ts"]
   M --> G["codegen.ts"]
   W["Project detection<br/>import profile"] --> G
   G --> V["Diff preview"]

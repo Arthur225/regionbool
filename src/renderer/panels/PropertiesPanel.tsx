@@ -1,10 +1,8 @@
-/** The right panel: exact values for the selected shape, the field's settings and the point tester. */
-import { regionContainsForAlliance } from '../../shared/geometry';
+/** The right panel: exact values for the selected shape, the field's settings and the project. */
 import type { ProjectInfo } from '../../shared/ipc';
 import { JAVA_PROFILES } from '../../shared/javaProfiles';
 import type { FieldInfo, FieldSymmetry, PolygonShape, Shape } from '../../shared/model';
 import { fieldInfoFrom } from '../actions';
-import { regionColor } from '../canvas/FieldCanvas';
 import { useEditor } from '../store';
 import { NumberField } from './NumberField';
 
@@ -147,69 +145,10 @@ function ShapeFields({ shape }: { shape: Shape }) {
   }
 }
 
-function PointTester() {
-  const doc = useEditor((s) => s.doc);
-  const testPoint = useEditor((s) => s.testPoint);
-  const testAlliance = useEditor((s) => s.testAlliance);
-  const editor = useEditor.getState();
-
-  return (
-    <section data-testid="point-tester">
-      <h2>Point tester</h2>
-      <div className="tool-group" role="group" aria-label="Test alliance">
-        {(['blue', 'red'] as const).map((alliance) => (
-          <button
-            key={alliance}
-            type="button"
-            className={testAlliance === alliance ? 'active' : ''}
-            aria-pressed={testAlliance === alliance}
-            onClick={() => editor.setTestAlliance(alliance)}
-          >
-            {alliance === 'blue' ? 'Blue' : 'Red'}
-          </button>
-        ))}
-      </div>
-      {!testPoint && <p className="hint">Click the field to place a point.</p>}
-      {testPoint && (
-        <>
-          <p className="test-position" data-testid="test-position">
-            ({testPoint.x}, {testPoint.y})
-          </p>
-          <ul className="test-results">
-            {doc.regions.map((region, index) => {
-              const inside = regionContainsForAlliance(
-                region,
-                testPoint.x,
-                testPoint.y,
-                testAlliance,
-                doc.field,
-              );
-              return (
-                <li key={region.id} data-testid="test-result">
-                  <span className="swatch" style={{ background: regionColor(index) }} />
-                  <span>{region.name}</span>
-                  <strong className={inside ? 'yes' : 'no'}>{inside ? 'Inside' : 'Outside'}</strong>
-                </li>
-              );
-            })}
-          </ul>
-          {testAlliance === 'red' &&
-            doc.regions.some((r) => r.allianceMode === 'alliance-relative') && (
-              <p className="hint">
-                Regions that flip are shown at their red position, with the drawn position faded.
-              </p>
-            )}
-        </>
-      )}
-    </section>
-  );
-}
-
 export function PropertiesPanel({ onImportField }: { onImportField(): void }) {
   const doc = useEditor((s) => s.doc);
   const project = useEditor((s) => s.project);
   const fields = useEditor((s) => s.fields);
-  const tool = useEditor((s) => s.tool);
   const selectedRegionId = useEditor((s) => s.selectedRegionId);
   const selectedShapeId = useEditor((s) => s.selectedShapeId);
   const { field } = doc;
@@ -220,8 +159,6 @@ export function PropertiesPanel({ onImportField }: { onImportField(): void }) {
 
   return (
     <aside className="panel properties-panel" aria-label="Properties">
-      {tool === 'test' && <PointTester />}
-
       {shape && (
         <section data-testid="shape-properties">
           <h2>Shape</h2>

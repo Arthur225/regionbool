@@ -16,7 +16,6 @@ if (FieldRegions.isInScoringZone(drivetrain.getPose())) {
 
 - **Shapes:** rectangles, circles, triangles and free polygons, all rotatable. Combine shapes in one region, and cut holes out of it.
 - **Alliance handling:** set each region to flip on red or stay fixed on the field. The generated code flips the right way for that season.
-- **Point tester:** click the field to see which regions contain a point, on either alliance. It uses the same math as the generated code, and a test compares the two.
 - **Safe export:** you see a diff before anything is written. RegionBool won't replace a file it didn't generate.
 - **Field images:** 2022 to 2026 are included, or import your own image.
 - **See your regions in dashboards:** generated classes can publish their outlines for AdvantageScope, Glass or Elastic.
@@ -48,7 +47,7 @@ Builds aren't signed with a developer certificate yet, so your system will warn 
 1. **Open your robot project** with **Open robot project**. RegionBool works out which WPILib imports your project uses.
 2. **Pick the field** in the right panel. 2025 and 2026 have separate welded and AndyMark fields, because their sizes differ. Check which your event uses.
 3. **Draw.** Pick a shape tool and draw on the field. Your first shape creates a region. Use **Cut hole** to subtract from it, and the panels on either side to rename it or type exact values.
-4. **Check it.** Use **Test point** and click the field, trying both Blue and Red. The field image is a guide, so type exact values when precision matters.
+4. **Check it.** Compare the outlines with the field image, and type exact values when precision matters, since the image is a guide. Regions that flip are drawn on the blue side here, and the generated code moves them on red.
 5. **Export.** **Export Java** shows what will change, and **Write file** writes it. By default that's `src/main/java/frc/robot/generated/FieldRegions.java`.
 6. **Commit** both the generated class and the `.regionbool` folder, so your team can keep editing the regions.
 

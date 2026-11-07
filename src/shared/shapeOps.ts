@@ -185,22 +185,3 @@ export function removeVertex(shape: PolygonShape, index: number): PolygonShape {
   if (shape.kind !== 'polygon' || shape.points.length <= 3) return shape;
   return { ...shape, points: shape.points.filter((_, i) => i !== index) };
 }
-
-/**
- * Returns where a shape appears on red's side of the field. A point is in the flipped shape exactly
- * when its flipped position is in the original, which is how generated code tests it.
- */
-export function flipShape(shape: Shape, field: FieldInfo): Shape {
-  const flip = (p: Point): Point => ({
-    x: field.lengthMeters - p.x,
-    y: field.symmetry === 'rotational' ? field.widthMeters - p.y : p.y,
-  });
-  if (shape.kind !== 'rect' && shape.kind !== 'circle') {
-    return { ...shape, points: shape.points.map(flip) };
-  }
-  const center = flip({ x: shape.cx, y: shape.cy });
-  if (shape.kind === 'circle') return { ...shape, cx: center.x, cy: center.y };
-  // A 180 degree turn leaves a rectangle looking the same, but a reflection reverses its rotation.
-  const rotationDeg = field.symmetry === 'rotational' ? shape.rotationDeg : -shape.rotationDeg;
-  return { ...shape, cx: center.x, cy: center.y, rotationDeg };
-}

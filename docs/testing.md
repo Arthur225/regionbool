@@ -15,7 +15,7 @@
 
 ## Java cross-check
 
-This is the main protection against the preview showing one thing while the robot does another. For both profiles and both field symmetries, it does the following:
+This is the main protection against generated code drifting from the rules in `docs/data-model.md`. For both profiles and both field symmetries, it does the following:
 
 1. Generates the class from a project using every shape type, mode and alliance behavior.
 2. Compiles it with `javac --release 17 -Xlint:all -Werror`, using small stubs in place of WPILib.

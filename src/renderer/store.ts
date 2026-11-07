@@ -1,11 +1,10 @@
 /**
  * Editor state. Undo works on snapshots of the document, which are cheap because updates never
  * mutate it. A pointer drag makes many changes but counts as one undo step, using beginGesture and
- * endGesture. Selection, tools and the point tester aren't part of undo.
+ * endGesture. Selection and tools aren't part of undo.
  */
 import { create } from 'zustand';
 import type { FieldDefinition } from '../shared/fields';
-import type { AllianceState } from '../shared/geometry';
 import type { ProjectInfo } from '../shared/ipc';
 import { REGIONS_FILE_VERSION } from '../shared/model';
 import type {
@@ -20,7 +19,7 @@ import type {
 } from '../shared/model';
 
 /** The active canvas tool. */
-export type Tool = 'select' | 'rect' | 'circle' | 'triangle' | 'polygon' | 'test';
+export type Tool = 'select' | 'rect' | 'circle' | 'triangle' | 'polygon';
 
 /** Grid sizes offered for snapping, in meters. */
 export const GRID_SIZES = [0.05, 0.1, 0.25, 0.5, 1] as const;
@@ -82,9 +81,6 @@ interface EditorState {
   gridMeters: number;
   /** Vertices placed so far while drawing a triangle or polygon. */
   draftPoints: Point[];
-  /** The point tester's point, or null if none is placed. */
-  testPoint: Point | null;
-  testAlliance: Exclude<AllianceState, 'unknown'>;
   /** Pointer position on the field, or null when off the canvas. */
   cursor: Point | null;
 
@@ -98,8 +94,6 @@ interface EditorState {
   setSnapEnabled(enabled: boolean): void;
   setGridMeters(meters: number): void;
   setDraftPoints(points: Point[]): void;
-  setTestPoint(point: Point | null): void;
-  setTestAlliance(alliance: Exclude<AllianceState, 'unknown'>): void;
   setCursor(point: Point | null): void;
   select(regionId: string | null, shapeId: string | null): void;
 
@@ -130,7 +124,6 @@ const initialTransient = {
   selectedRegionId: null,
   selectedShapeId: null,
   draftPoints: [],
-  testPoint: null,
 };
 
 function mapShapes(doc: RegionProject, change: (shape: Shape) => Shape | null): RegionProject {
@@ -178,7 +171,6 @@ export const useEditor = create<EditorState>((set, get) => {
     drawMode: 'add',
     snapEnabled: true,
     gridMeters: 0.25,
-    testAlliance: 'blue',
     cursor: null,
 
     setProject: (project) => set({ project }),
@@ -190,8 +182,6 @@ export const useEditor = create<EditorState>((set, get) => {
     setSnapEnabled: (snapEnabled) => set({ snapEnabled }),
     setGridMeters: (gridMeters) => set({ gridMeters }),
     setDraftPoints: (draftPoints) => set({ draftPoints }),
-    setTestPoint: (testPoint) => set({ testPoint }),
-    setTestAlliance: (testAlliance) => set({ testAlliance }),
     setCursor: (cursor) => set({ cursor }),
     select: (selectedRegionId, selectedShapeId) => set({ selectedRegionId, selectedShapeId }),
 

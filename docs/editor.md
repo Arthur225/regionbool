@@ -18,20 +18,19 @@ Handles and labels need a constant size on screen, so their sizes are divided by
 | ----------------------------------------- | --------------- |
 | `doc`: the regions, field and output      | Yes             |
 | Selection, tool, draw mode, snap settings | No              |
-| Half-drawn polygon, point tester, cursor  | No              |
+| Half-drawn polygon, cursor                | No              |
 
 `doc` is never mutated, so each undo step is just a reference to an earlier version. `beginGesture` and `endGesture` make one undo step out of many changes, which is used for drags and for typing in a region name. `undo` clears a selection that no longer exists.
 
 ## Interaction
 
-| Tool           | Input                                                               |
-| -------------- | ------------------------------------------------------------------- |
-| Select (V)     | Drag a shape to move it, and drag handles to resize or rotate it    |
-| Rectangle (R)  | Drag between two corners                                            |
-| Circle (C)     | Drag from the center to the edge                                    |
-| Triangle (T)   | Click 3 points                                                      |
-| Polygon (P)    | Click points. Finish with a double-click, Enter, or the first point |
-| Test point (X) | Click to see which regions contain the point                        |
+| Tool          | Input                                                               |
+| ------------- | ------------------------------------------------------------------- |
+| Select (V)    | Drag a shape to move it, and drag handles to resize or rotate it    |
+| Rectangle (R) | Drag between two corners                                            |
+| Circle (C)    | Drag from the center to the edge                                    |
+| Triangle (T)  | Click 3 points                                                      |
+| Polygon (P)   | Click points. Finish with a double-click, Enter, or the first point |
 
 Other keys: Esc cancels and returns to Select, Delete removes the selected shape, Cmd/Ctrl+Z undoes, and Cmd/Ctrl+Shift+Z or Ctrl+Y redoes. Shortcuts are ignored while typing in a field. On a selected polygon, double-clicking an edge adds a point and double-clicking a point removes it.
 
@@ -65,10 +64,6 @@ Reloading the page closes the project in the main process, because a fresh empty
 The app starts on the newest field, without counting that as a change. `FieldCanvas` loads the image for `field.fieldId` and places it so its marked corners land on the field's corners, turning it 180° about the field's center if the definition says so. See `docs/fields.md` for why that matters.
 
 The import dialog measures clicks as a fraction of the displayed image and converts them to the image's own pixels, so its size on screen doesn't matter. Its container has to shrink to fit the image for that to work.
-
-## Point tester
-
-It calls `regionContainsForAlliance` from `geometry.ts`, which is the function proved to match generated Java, so its answer is what the robot code will return. On red, the map uses `flipShape` to show alliance-relative regions where they'll really be. A unit test checks that the flipped shapes match that function across the field.
 
 ## Not yet in the editor
 

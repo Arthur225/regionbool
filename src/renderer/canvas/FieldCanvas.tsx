@@ -10,7 +10,6 @@ import type { Point, PolygonShape, Region, Shape } from '../../shared/model';
 import {
   circleFromDrag,
   clampToField,
-  flipShape,
   insertVertex,
   moveVertex,
   rectCorners,
@@ -19,7 +18,6 @@ import {
   resizeCircle,
   resizeRectCorner,
   rotateShape,
-  roundMeters,
   shapeCenter,
   snapPoint,
   snapValue,
@@ -159,8 +157,6 @@ export function FieldCanvas() {
   const selectedRegionId = useEditor((s) => s.selectedRegionId);
   const selectedShapeId = useEditor((s) => s.selectedShapeId);
   const draftPoints = useEditor((s) => s.draftPoints);
-  const testPoint = useEditor((s) => s.testPoint);
-  const testAlliance = useEditor((s) => s.testAlliance);
   const cursor = useEditor((s) => s.cursor);
   const fields = useEditor((s) => s.fields);
 
@@ -243,10 +239,6 @@ export function FieldCanvas() {
     const editor = useEditor.getState();
     const raw = toField(event);
 
-    if (editor.tool === 'test') {
-      editor.setTestPoint({ x: roundMeters(raw.x), y: roundMeters(raw.y) });
-      return;
-    }
     if (editor.tool === 'rect' || editor.tool === 'circle') {
       gestureRef.current = {
         type: editor.tool === 'rect' ? 'draw-rect' : 'draw-circle',
@@ -430,7 +422,6 @@ export function FieldCanvas() {
     }
   }
 
-  const showFlipped = tool === 'test' && testAlliance === 'red';
   const verticalLines = Array.from({ length: Math.floor(length) + 1 }, (_, i) => i);
   const horizontalLines = Array.from({ length: Math.floor(width) + 1 }, (_, i) => i);
   const previewPoints =
@@ -517,25 +508,8 @@ export function FieldCanvas() {
 
       {/* Filled areas */}
       {regions.map((region, index) => (
-        <g
-          key={region.id}
-          opacity={showFlipped && region.allianceMode === 'alliance-relative' ? 0.25 : 1}
-        >
-          <RegionFill region={region} index={index} sy={sy} prefix="fill" />
-        </g>
+        <RegionFill key={region.id} region={region} index={index} sy={sy} prefix="fill" />
       ))}
-      {showFlipped &&
-        regions.map((region, index) =>
-          region.allianceMode === 'alliance-relative' ? (
-            <RegionFill
-              key={region.id}
-              region={{ ...region, shapes: region.shapes.map((shape) => flipShape(shape, field)) }}
-              index={index}
-              sy={sy}
-              prefix="flipped"
-            />
-          ) : null,
-        )}
 
       {/* Outlines, which also receive clicks */}
       {regions.map((region, index) =>
@@ -646,14 +620,6 @@ export function FieldCanvas() {
                 />
               );
             })()}
-        </g>
-      )}
-
-      {/* Point tester */}
-      {testPoint && (
-        <g pointerEvents="none" data-testid="test-marker">
-          <circle cx={testPoint.x} cy={sy(testPoint.y)} r={unit * 7} className="test-marker" />
-          <circle cx={testPoint.x} cy={sy(testPoint.y)} r={unit * 2} className="test-marker-dot" />
         </g>
       )}
     </svg>

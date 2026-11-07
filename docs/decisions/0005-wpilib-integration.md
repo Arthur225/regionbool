@@ -8,7 +8,7 @@ Version 1 includes project detection and a generated Field2d helper. Live NT4 po
 
 ## Why
 
-These were the features chosen for the first version. A point-tester tool gives a way to check regions without a robot connection.
+These were the features chosen for the first version. Checking regions happens through generated tests and live values in a dashboard.
 
 ## Consequences
 

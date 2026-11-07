@@ -1,5 +1,5 @@
 /**
- * Point-in-region math used by the app's preview.
+ * The reference definition of "inside": what the generated Java must do.
  *
  * Invariant: `codegen.ts` emits the same formulas in Java, and the generated code must agree with
  * these functions on every point, including exact edges. If you change one, change the other.

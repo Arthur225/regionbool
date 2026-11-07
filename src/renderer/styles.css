@@ -123,8 +123,7 @@ h2 {
   color: var(--fg);
 }
 
-code,
-.test-position {
+code {
   font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
 }
 
@@ -264,8 +263,7 @@ code,
 
 .region-list,
 .shape-list,
-.issue-list,
-.test-results {
+.issue-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -384,8 +382,7 @@ button.icon {
 .field-canvas.tool-rect,
 .field-canvas.tool-circle,
 .field-canvas.tool-triangle,
-.field-canvas.tool-polygon,
-.field-canvas.tool-test {
+.field-canvas.tool-polygon {
   cursor: crosshair;
 }
 
@@ -430,8 +427,7 @@ button.icon {
 .tool-rect .shape-outline,
 .tool-circle .shape-outline,
 .tool-triangle .shape-outline,
-.tool-polygon .shape-outline,
-.tool-test .shape-outline {
+.tool-polygon .shape-outline {
   cursor: inherit;
 }
 
@@ -474,17 +470,6 @@ button.icon {
   stroke: var(--handle);
 }
 
-.test-marker {
-  vector-effect: non-scaling-stroke;
-  fill: none;
-  stroke: var(--fg);
-  stroke-width: 2px;
-}
-
-.test-marker-dot {
-  fill: var(--fg);
-}
-
 .number-field {
   display: flex;
   align-items: center;
@@ -517,32 +502,6 @@ button.icon {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-}
-
-.test-position {
-  margin: 8px 0;
-  font-family: ui-monospace, Menlo, monospace;
-}
-
-.test-results li {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 0;
-}
-
-.test-results li span:nth-child(2) {
-  flex: 1;
-  overflow-wrap: anywhere;
-}
-
-.test-results .yes {
-  color: var(--success);
-}
-
-.test-results .no {
-  color: var(--muted);
-  font-weight: normal;
 }
 
 dl {
