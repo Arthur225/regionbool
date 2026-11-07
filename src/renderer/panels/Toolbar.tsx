@@ -1,7 +1,7 @@
 /** The top bar: project, drawing tools, add or hole mode, snapping, undo and redo. */
 import type { ReactNode } from 'react';
 import { openProject, saveProject } from '../actions';
-import teamLogo from '../assets/team-logo.jpg';
+import teamLogo from '../assets/team-1156-logo.png';
 import { GRID_SIZES, useEditor, type Tool } from '../store';
 
 const TOOLS: { tool: Tool; label: string; key: string; icon: ReactNode }[] = [
@@ -31,7 +31,6 @@ export function Toolbar({ onExport }: { onExport(): void }) {
 
   return (
     <header className="toolbar">
-      <img className="team-logo" src={teamLogo} alt="UnderControl team 1156" />
       <h1>RegionBool</h1>
       <button type="button" onClick={() => void openProject()}>
         Open robot project
@@ -130,6 +129,7 @@ export function Toolbar({ onExport }: { onExport(): void }) {
           Redo
         </button>
       </div>
+      <img className="team-logo" src={teamLogo} alt="Team 1156" />
     </header>
   );
 }

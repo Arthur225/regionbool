@@ -4,7 +4,7 @@
 
 ## Decision
 
-The app keeps its three-panel layout, restyled with UnderControl 1156's navy and blue, its logo, the Barlow font and icon tools.
+The app keeps its three-panel layout, restyled with UnderControl 1156's navy and blue, the Team 1156 logo, the Barlow font and icon tools.
 
 ## Why
 

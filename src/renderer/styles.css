@@ -165,9 +165,8 @@ code {
 }
 
 .team-logo {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
+  height: 26px;
+  margin-left: auto;
 }
 
 .icon-tool {

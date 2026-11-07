@@ -4,7 +4,7 @@ The renderer has three parts: `store.ts` holds the state, `canvas/FieldCanvas.ts
 
 ## Look
 
-Colors are CSS variables at the top of `styles.css`, taken from the UnderControl 1156 logo: team navy and blue, with the team's yellow as a highlight. The top and bottom bars stay navy in both light and dark mode. Barlow and JetBrains Mono are bundled through `@fontsource`, so the app needs no network at competitions. Field images keep square corners, and region outlines stay exact, because their corners are the real boundaries.
+Colors are CSS variables at the top of `styles.css`, taken from the team's logos: team navy and blue, with the team's yellow as a highlight. The top and bottom bars stay navy in both light and dark mode. The Team 1156 logo is white on a transparent background, so it works on any bar color. Barlow and JetBrains Mono are bundled through `@fontsource`, so the app needs no network at competitions. Field images keep square corners, and region outlines stay exact, because their corners are the real boundaries.
 
 ## Coordinates
 
