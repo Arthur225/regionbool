@@ -53,11 +53,13 @@ A profile (`src/shared/javaProfiles.ts`) holds everything that depends on the WP
 | Alliance values  | `Alliance.Red`, `Alliance.Blue`                         | `Alliance.RED`, `Alliance.BLUE`                 |
 | Getting alliance | `DriverStation.getAlliance()`                           | `MatchState.getAlliance()`                      |
 
-The 2027 API is still in alpha and may change again. We haven't determined which alpha switched from one profile to the other.
+`modern` has been compiled and run against real 2027.0.0-alpha-8, including the alliance flip and NetworkTables publishing. `legacy` has been compiled and run against real 2026.2.1, and compiled against 2025.3.2.
+
+The 2027 API is still in alpha and may change again. We haven't determined which alpha switched from one profile to the other: alpha-1 uses `legacy`, and alpha-6 and alpha-8 use `modern`.
 
 ## Adding or updating a profile
 
-1. Read the WPILib jars or `-sources` jars in `~/.gradle/caches/modules-2/files-2.1`. Don't rely on memory, as these APIs do move.
+1. Read the WPILib jars or `-sources` jars in `~/wpilib/<install>/maven` or `~/.gradle/caches/modules-2/files-2.1`. Don't rely on memory, as these APIs do move.
 2. Update `JavaProfileId` and `JAVA_PROFILES`.
 3. Update the stubs in `tests/unit/java-crosscheck.test.ts` to match the real signatures, and add the profile to the test cases there and in `java-wpilib.test.ts`.
 4. Run `npm test`. If output changed on purpose, review the snapshot diff in `tests/unit/__snapshots__/`, then update it with `npx vitest run -u`.

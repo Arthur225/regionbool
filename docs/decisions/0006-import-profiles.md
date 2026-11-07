@@ -12,4 +12,4 @@ The WPILib year doesn't determine the package names. A 2027 alpha-1 project was 
 
 ## Consequences
 
-Two profiles exist, legacy and modern. Further alpha changes may need more profiles, or edits to the existing ones. Compiling against alpha-6 jars needs JDK 25, because they are Java 25 class files.
+Two profiles exist, legacy and modern. Further alpha changes may need more profiles, or edits to the existing ones. Compiling against alpha-6 jars needs JDK 25, because they are Java 25 class files. `modern` was later confirmed by running generated code against real 2027.0.0-alpha-8.

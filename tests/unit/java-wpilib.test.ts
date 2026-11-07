@@ -1,7 +1,8 @@
 /**
- * Compiles generated code against real WPILib jars from the local Gradle cache, to catch a stub in
- * `java-crosscheck.test.ts` that doesn't match the real API. Skipped when the jars aren't present
- * or need a newer JDK than the one installed, so run this on a machine that has built a robot project.
+ * Compiles generated code against real WPILib jars, to catch a stub in `java-crosscheck.test.ts`
+ * that doesn't match the real API. Jars come from a WPILib install in ~/wpilib, using that install's
+ * own JDK, or else from the Gradle cache. Skipped when neither has them, or when the only JDK is too
+ * old to read them, so run this on a machine with WPILib installed.
  */
 import { spawnSync } from 'node:child_process';
 import {
@@ -51,15 +52,62 @@ function latestVersion(groupPath: string, pattern: RegExp): string | null {
   );
 }
 
-const legacyVersion = latestVersion('edu.wpi.first.wpimath/wpimath-java', /^202[56]\./);
-const modernVersion = latestVersion('org.wpilib.wpimath/wpimath-java', /^2027\./);
+const WPILIB_HOME = join(homedir(), 'wpilib');
+
+/** A set of real WPILib jars, and the compiler to use with them. */
+interface RealWpilib {
+  version: string;
+  classpath: string[];
+  javac: string;
+}
+
+/** Looks through ~/wpilib installs for the newest version, using the JDK that came with it. */
+function findInInstalls(group: string, mathArtifact: string, pattern: RegExp): RealWpilib | null {
+  if (!existsSync(WPILIB_HOME)) return null;
+  const found = readdirSync(WPILIB_HOME).flatMap((install) => {
+    const maven = join(WPILIB_HOME, install, 'maven', group);
+    const versions = join(maven, mathArtifact);
+    if (!existsSync(versions)) return [];
+    return readdirSync(versions)
+      .filter((version) => pattern.test(version))
+      .map((version) => ({ install, maven, version }));
+  });
+  const newest = found
+    .sort((a, b) => a.version.localeCompare(b.version, 'en', { numeric: true }))
+    .at(-1);
+  if (!newest) return null;
+  return {
+    version: newest.version,
+    classpath: findJars(newest.maven).filter(
+      (jar) => jar.includes(`${sep}${newest.version}${sep}`) && /-java-/.test(jar),
+    ),
+    javac: join(WPILIB_HOME, newest.install, 'jdk/bin/javac'),
+  };
+}
+
+function findInGradleCache(
+  groupPrefix: string,
+  mathPath: string,
+  pattern: RegExp,
+): RealWpilib | null {
+  const version = latestVersion(mathPath, pattern);
+  if (!version) return null;
+  return { version, classpath: classpathFor(groupPrefix, version), javac: 'javac' };
+}
+
+const legacy =
+  findInInstalls('edu/wpi/first', 'wpimath/wpimath-java', /^202[56]\./) ??
+  findInGradleCache('edu.wpi.first.', 'edu.wpi.first.wpimath/wpimath-java', /^202[56]\./);
+const modern =
+  findInInstalls('org/wpilib', 'wpimath/wpimath-java', /^2027\./) ??
+  findInGradleCache('org.wpilib', 'org.wpilib.wpimath/wpimath-java', /^2027\./);
 
 const tempDirs: string[] = [];
 afterAll(() => tempDirs.forEach((dir) => rmSync(dir, { recursive: true, force: true })));
 
 function compile(
   profile: JavaProfile,
-  classpath: string[],
+  wpilib: RealWpilib,
 ): { status: number | null; stderr: string } {
   const project = sampleProject();
   const root = mkdtempSync(join(tmpdir(), 'regionbool-wpilib-'));
@@ -78,30 +126,30 @@ function compile(
     '-d',
     'classes',
     '-cp',
-    classpath.join(delimiter),
+    wpilib.classpath.join(delimiter),
     file,
   ];
-  return spawnSync('javac', args, {
+  return spawnSync(wpilib.javac, args, {
     cwd: root,
     encoding: 'utf8',
   });
 }
 
 describe('generated Java compiles against real WPILib', () => {
-  it.skipIf(!legacyVersion)(
-    `legacy profile with ${legacyVersion}`,
+  it.skipIf(!legacy)(
+    `legacy profile with ${legacy?.version}`,
     () => {
-      const result = compile(JAVA_PROFILES.legacy, classpathFor('edu.wpi.first.', legacyVersion!));
+      const result = compile(JAVA_PROFILES.legacy, legacy!);
       expect(result.status, result.stderr).toBe(0);
     },
     60_000,
   );
 
-  it.skipIf(!modernVersion)(
-    `modern profile with ${modernVersion}`,
+  it.skipIf(!modern)(
+    `modern profile with ${modern?.version}`,
     (context) => {
-      const result = compile(JAVA_PROFILES.modern, classpathFor('org.wpilib', modernVersion!));
-      // Alpha jars need a JDK newer than some machines have, which says nothing about the generated code.
+      const result = compile(JAVA_PROFILES.modern, modern!);
+      // 2027 jars need a newer JDK than some machines have, which says nothing about the code.
       if (/class file has wrong version/.test(result.stderr)) context.skip();
       expect(result.status, result.stderr).toBe(0);
     },
