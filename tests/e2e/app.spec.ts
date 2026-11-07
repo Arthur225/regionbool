@@ -74,6 +74,7 @@ test('the renderer has no direct access to Node or IPC', async () => {
     'getCurrentProject',
     'getFieldImage',
     'listFields',
+    'openLastProject',
     'openProject',
     'pickFieldImage',
     'previewExport',

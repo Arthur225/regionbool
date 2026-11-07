@@ -18,6 +18,12 @@ export const IpcChannel = {
   GetAppInfo: 'app:get-info',
   /** Shows a folder picker and makes the chosen folder the current project. Returns {@link OpenProjectResult}. */
   OpenProject: 'project:open',
+  /**
+   * Reopens the project from the last run, once per launch. Takes no arguments: the main process
+   * reads the path from its own settings, so the renderer still can't name a folder. Returns
+   * {@link OpenProjectResult}, with `canceled` when there's nothing to reopen.
+   */
+  OpenLastProject: 'project:open-last',
   /** Forgets the current project. Nothing on disk changes. */
   CloseProject: 'project:close',
   /** Takes project data and saves it to `.regionbool/regions.json`. Returns {@link SaveResult}. */
@@ -164,6 +170,7 @@ export type SaveCustomFieldResult =
 export interface RegionBoolApi {
   getAppInfo(): Promise<AppInfo>;
   openProject(): Promise<OpenProjectResult>;
+  openLastProject(): Promise<OpenProjectResult>;
   closeProject(): Promise<void>;
   /** `project` is checked against the file schema by the main process. */
   saveRegions(project: unknown): Promise<SaveResult>;

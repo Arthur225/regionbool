@@ -30,9 +30,21 @@ import {
 } from './fields';
 import { detectProject } from './project';
 import { readSavedRegions, saveRegions } from './regionsFile';
+import { readSettings, writeSettings } from './settings';
 
 let currentProject: ProjectInfo | null = null;
 let pickedImage: PickedImage | null = null;
+/** Whether startup has already tried to reopen the last project. */
+let triedLastProject = false;
+
+/** Makes a detected project current, and remembers it for the next run. */
+async function useProject(project: ProjectInfo): Promise<OpenProjectResult> {
+  currentProject = project;
+  pickedImage = null; // An image picked for one project mustn't land in another.
+  // Failing to remember shouldn't stop the project from opening.
+  await writeSettings(app.getPath('userData'), { lastProjectPath: project.root }).catch(() => {});
+  return { status: 'opened', project, saved: await readSavedRegions(project.root) };
+}
 
 /** Runs an export step for the current project, reporting any failure as a normal result. */
 async function withProject<T>(
@@ -82,13 +94,24 @@ export function registerIpcHandlers(): void {
 
     const detection = await detectProject(path);
     if (!detection.valid) return { status: 'invalid', path, reasons: detection.reasons };
-    currentProject = detection.project;
-    pickedImage = null; // An image picked for one project mustn't land in another.
-    return {
-      status: 'opened',
-      project: detection.project,
-      saved: await readSavedRegions(detection.project.root),
-    };
+    return useProject(detection.project);
+  });
+
+  ipcMain.handle(IpcChannel.OpenLastProject, async (): Promise<OpenProjectResult> => {
+    // Only once per launch: a reloaded page starts empty, the same as closing the project.
+    if (triedLastProject) return { status: 'canceled' };
+    triedLastProject = true;
+
+    const dir = app.getPath('userData');
+    const { lastProjectPath } = await readSettings(dir);
+    if (!lastProjectPath) return { status: 'canceled' };
+
+    const detection = await detectProject(lastProjectPath);
+    if (detection.valid) return useProject(detection.project);
+
+    // It was moved or deleted, so stop trying. The user can still open it again by hand.
+    await writeSettings(dir, { lastProjectPath: null }).catch(() => {});
+    return { status: 'canceled' };
   });
 
   ipcMain.handle(IpcChannel.CloseProject, () => {
