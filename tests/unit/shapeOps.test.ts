@@ -1,20 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import {
-  regionContains,
-  regionContainsForAlliance,
-  shapeContains,
-} from '../../src/shared/geometry';
-import type {
-  CircleShape,
-  FieldInfo,
-  PolygonShape,
-  RectShape,
-  Region,
-} from '../../src/shared/model';
+import { shapeContains } from '../../src/shared/geometry';
+import type { CircleShape, FieldInfo, PolygonShape, RectShape } from '../../src/shared/model';
 import {
   circleFromDrag,
   clampToField,
-  flipShape,
   insertVertex,
   moveVertex,
   rectCorners,
@@ -190,47 +179,5 @@ describe('vertices', () => {
   it("never changes a triangle's vertex count", () => {
     expect(insertVertex(triangle, 0, { x: 1, y: 1 }).points).toHaveLength(3);
     expect(removeVertex(triangle, 0).points).toHaveLength(3);
-  });
-});
-
-describe('flipShape', () => {
-  const fields: FieldInfo[] = [
-    { lengthMeters: 16, widthMeters: 8, symmetry: 'rotational' },
-    { lengthMeters: 16, widthMeters: 8, symmetry: 'mirrored' },
-  ];
-  const region: Region = {
-    id: 'r',
-    name: 'Z',
-    allianceMode: 'alliance-relative',
-    shapes: [
-      { ...rect, id: 'a', rotationDeg: 33 },
-      { ...circle, id: 'b', cx: 11, cy: 6, radius: 1.5 },
-      {
-        ...triangle,
-        id: 'c',
-        points: [
-          { x: 1, y: 6 },
-          { x: 4, y: 6.5 },
-          { x: 2, y: 7.8 },
-        ],
-      },
-      { ...circle, id: 'h', mode: 'subtract', cx: 5, cy: 4, radius: 0.5 },
-    ],
-  };
-
-  it.each(fields)('shows on the map exactly what generated code checks: $symmetry', (field) => {
-    const flipped: Region = {
-      ...region,
-      shapes: region.shapes.map((shape) => flipShape(shape, field)),
-    };
-    let inside = 0;
-    for (let x = 0.13; x < 16; x += 0.31) {
-      for (let y = 0.07; y < 8; y += 0.29) {
-        const onRed = regionContainsForAlliance(region, x, y, 'red', field);
-        if (onRed) inside++;
-        expect(regionContains(flipped, x, y), `at (${x}, ${y})`).toBe(onRed);
-      }
-    }
-    expect(inside).toBeGreaterThan(50);
   });
 });

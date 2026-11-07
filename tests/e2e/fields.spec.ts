@@ -1,5 +1,5 @@
 /** Choosing a field, and importing your own image. */
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { expect, test, type ElectronApplication, type Page } from '@playwright/test';
 import {
@@ -121,6 +121,33 @@ test('drawing still works over an image', async () => {
   expect(await numberValue('prop-cx')).toBe('4');
   await dragField(page, [4, 2.5], [5, 2.5]);
   expect(await numberValue('prop-cx')).toBe('5');
+});
+
+test('the open button shows the project name once one is open', async () => {
+  const button = page.getByRole('button', { name: 'Open robot project' });
+  await expect(button).toHaveText('Open robot project');
+  const root = createRobotProject();
+  await openProject(root);
+  await expect(button).toHaveText(basename(root));
+  await expect(button).toHaveAttribute('title', new RegExp('open a different project'));
+
+  // It still opens another project.
+  const other = createRobotProject();
+  await openProject(other);
+  await expect(button).toHaveText(basename(other));
+});
+
+test('the open button keeps its size, whatever the project is called', async () => {
+  const button = page.getByRole('button', { name: 'Open robot project' });
+  const before = await button.boundingBox();
+
+  const longName = join(createFolder({}), 'a-robot-project-with-a-really-very-long-folder-name');
+  cpSync(createRobotProject(), longName, { recursive: true });
+  await openProject(longName);
+
+  const after = await button.boundingBox();
+  expect(after?.width).toBe(before?.width);
+  expect(after?.x).toBe(before?.x);
 });
 
 test('the chosen field is saved with the project', async () => {

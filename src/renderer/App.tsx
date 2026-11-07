@@ -16,7 +16,6 @@ const TOOL_KEYS: Record<string, Tool> = {
   c: 'circle',
   t: 'triangle',
   p: 'polygon',
-  x: 'test',
 };
 
 function isTyping(target: EventTarget | null): boolean {
@@ -76,7 +75,6 @@ function StatusBar({ info }: { info: AppInfo | null }) {
     circle: 'Drag from the center to draw a circle.',
     triangle: `Click 3 points. ${draftCount} placed.`,
     polygon: `Click to place points, then double-click, press Enter, or click the first point to finish. ${draftCount} placed.`,
-    test: 'Click the field to test a point.',
   };
 
   return (

@@ -1,3 +1,5 @@
+/// <reference lib="dom" />
+/// <reference lib="dom.iterable" />
 /**
  * Checks the packaged app rather than the development build. The risks here are different: files
  * left out of the package, resources in the wrong place, and dependencies that weren't included.
@@ -82,6 +84,15 @@ test('exports to a project, which needs the schema validator from the package', 
   );
   expect(java).toContain('public static boolean isInRegion1(Pose2d pose)');
   expect(existsSync(join(root, '.regionbool/regions.json'))).toBe(true);
+});
+
+test('includes the bundled fonts, so it works offline', async () => {
+  const loaded = await page.evaluate(async () => {
+    const fonts = (globalThis as unknown as { document: { fonts: FontFaceSet } }).document.fonts;
+    await fonts.ready;
+    return [...fonts].filter((font) => font.status === 'loaded').map((font) => font.family);
+  });
+  expect(loaded.join()).toContain('Barlow');
 });
 
 test('keeps the sandbox on', async () => {

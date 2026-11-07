@@ -249,41 +249,6 @@ test('renaming counts as one undo step and updates the method name', async () =>
   await expect(name).toHaveValue('Region 1');
 });
 
-test('point tester agrees with holes and alliance flipping', async () => {
-  await page.getByRole('checkbox', { name: 'Snap' }).uncheck();
-  await drawRect([2, 2], [6, 6]);
-  await page.getByRole('button', { name: 'Cut hole' }).click();
-  await tool('Circle').click();
-  await dragField([4, 4], [5, 4]);
-  await tool('Test point').click();
-
-  const result = page.getByTestId('test-result');
-  await clickField(2.5, 2.5);
-  await expect(result).toContainText('Inside');
-  await clickField(4, 4);
-  await expect(result).toContainText('Outside');
-  await clickField(10, 4);
-  await expect(result).toContainText('Outside');
-
-  // On red, the region is at (L-x, W-y) on a rotated field.
-  await page
-    .getByRole('group', { name: 'Test alliance' })
-    .getByRole('button', { name: 'Red' })
-    .click();
-  await clickField(2.5, 2.5);
-  await expect(result).toContainText('Outside');
-  await clickField(16.54 - 2.5, 8.07 - 2.5);
-  await expect(result).toContainText('Inside');
-
-  // A fixed region stays put.
-  await tool('Select').click();
-  await page.getByLabel('Alliance behavior').selectOption('fixed');
-  await tool('Test point').click();
-  await expect(result).toContainText('Outside');
-  await clickField(2.5, 2.5);
-  await expect(result).toContainText('Inside');
-});
-
 test('validation problems are shown', async () => {
   await page.getByRole('button', { name: 'Add region' }).click();
   await expect(page.getByTestId('issue-list')).toContainText('at least one shape');

@@ -13,6 +13,9 @@ extraResources:
   # Read at run time from Electron's resources folder. See bundledFieldsDir in src/main/ipc.ts.
   - from: resources/fields
     to: fields
+  # The font license has to travel with the fonts.
+  - from: resources/third-party
+    to: third-party
 publish: null
 mac:
   category: public.app-category.developer-tools
