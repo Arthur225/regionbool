@@ -2,7 +2,7 @@
  * What differs between WPILib versions in the code RegionBool generates.
  *
  * The WPILib year doesn't decide this: a 2027 alpha-1 project still used `edu.wpi.first.*`, while
- * alpha-6 uses `org.wpilib.*`. Checked against the WPILib 2026.2.1 jars and the 2027.0.0-alpha-6
+ * alpha-6 uses `org.wpilib.*`. Checked against the WPILib 2026.2.1 jars, the 2027.0.0-alpha-8 jars and the 2027.0.0-alpha-6
  * sources. See `docs/codegen.md` for how to add or update a profile.
  */
 

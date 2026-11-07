@@ -83,7 +83,7 @@ FieldRegions.forEachOutline((name, poses) -> Logger.recordOutput("Regions/" + na
 - **Edges:** a point exactly on an edge counts as inside a shape, so a point exactly on a hole's edge is outside the region.
 - **After a `git pull`:** reopen the project before saving, because RegionBool doesn't notice `regions.json` changing while it's open.
 - **Formatters:** Spotless and similar tools can reformat the generated class safely. RegionBool ignores formatting and comments when it checks for hand edits.
-- **WPILib versions:** 2025, 2026 and the 2027 alphas are supported. The 2027 API is still changing, so a later alpha may need an update.
+- **WPILib versions:** 2025, 2026 and the 2027 alphas are supported, and generated code has been run against 2026.2.1 and 2027 alpha-8. The 2027 API is still changing, so a later alpha may need an update.
 
 ## Development
 

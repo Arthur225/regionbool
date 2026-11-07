@@ -18,4 +18,4 @@ Comment-only edits aren't detected, because they don't change behavior. The expo
 
 Hashes saved by older versions were of the exact text, so a project exported before this change gets one false hand-edit warning on its next export. No version has been released, so there's no migration.
 
-Verified on a copy of a real 2026 project: real Spotless output normalizes to the generated code, and a JUnit test read the outlines back from real NetworkTables as `struct:Pose2d[]` on both alliances. The `modern` API was only checked against current WPILib sources.
+Verified on a copy of a real 2026 project: real Spotless output normalizes to the generated code, and a JUnit test read the outlines back from real NetworkTables as `struct:Pose2d[]` on both alliances. The `modern` API was first checked against current WPILib sources, then confirmed by running against real 2027.0.0-alpha-8.

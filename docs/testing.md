@@ -1,15 +1,15 @@
 # Testing
 
-| Layer            | Files                                | What it proves                                                                   | Needs       |
-| ---------------- | ------------------------------------ | -------------------------------------------------------------------------------- | ----------- |
-| Geometry         | `tests/unit/geometry.test.ts`        | Edges, rotation, concave polygons, holes and flips behave as specified           | Node        |
-| Model            | `tests/unit/model.test.ts`           | Name conversion and validation rules                                             | Node        |
-| Schema           | `tests/unit/schema.test.ts`          | The schema accepts saved projects and rejects corrupted ones                     | Node        |
-| Codegen          | `tests/unit/codegen.test.ts`         | Output content, snapshots for each profile, injection safety                     | Node        |
-| Java cross-check | `tests/unit/java-crosscheck.test.ts` | Compiled Java and `geometry.ts` agree on every point                             | A JDK       |
-| Real WPILib      | `tests/unit/java-wpilib.test.ts`     | Generated code compiles against real WPILib jars                                 | Cached jars |
-| Docs             | `tests/unit/docs.test.ts`            | The `AGENTS.md` map and decisions index aren't stale                             | Node        |
-| End to end       | `tests/e2e/`                         | The real app launches securely, opens projects, and the export flow reaches disk | Built app   |
+| Layer            | Files                                | What it proves                                                                   | Needs            |
+| ---------------- | ------------------------------------ | -------------------------------------------------------------------------------- | ---------------- |
+| Geometry         | `tests/unit/geometry.test.ts`        | Edges, rotation, concave polygons, holes and flips behave as specified           | Node             |
+| Model            | `tests/unit/model.test.ts`           | Name conversion and validation rules                                             | Node             |
+| Schema           | `tests/unit/schema.test.ts`          | The schema accepts saved projects and rejects corrupted ones                     | Node             |
+| Codegen          | `tests/unit/codegen.test.ts`         | Output content, snapshots for each profile, injection safety                     | Node             |
+| Java cross-check | `tests/unit/java-crosscheck.test.ts` | Compiled Java and `geometry.ts` agree on every point                             | A JDK            |
+| Real WPILib      | `tests/unit/java-wpilib.test.ts`     | Generated code compiles against real WPILib jars                                 | A WPILib install |
+| Docs             | `tests/unit/docs.test.ts`            | The `AGENTS.md` map and decisions index aren't stale                             | Node             |
+| End to end       | `tests/e2e/`                         | The real app launches securely, opens projects, and the export flow reaches disk | Built app        |
 
 `npm run check` runs everything except the end-to-end and packaged tests. `npm run test:e2e` and `npm run test:packaged` run those. `.github/workflows/release.yml` runs all of them on Windows, macOS and Linux, but only for tags and pull requests that change packaging.
 
@@ -30,14 +30,14 @@ Stubs are used so the test only needs a JDK. If the real API changes, the stubs 
 These tests skip rather than fail when their requirements are missing, so **a skip means unverified, not passing**. Check the output for skips when changing codegen or profiles:
 
 - The Java cross-check skips without `javac` on the `PATH`.
-- The real WPILib tests skip if the Gradle cache doesn't have those jars. The Gradle cache is filled by building a robot project of that version.
-- The `modern` real WPILib test also skips if the JDK is too old to read the jars. 2027 alpha-6 jars need Java 25.
+- The real WPILib tests look in `~/wpilib` installs, using each install's own JDK, then the Gradle cache. They skip if neither has those jars. CI has no WPILib install, so they only run on developers' machines.
+- The `modern` real WPILib test also skips if it only finds a JDK too old to read the jars. 2027 jars need Java 25, which WPILib's 2027 install includes.
 
 ## Manual checks
 
 **Field image orientation can't be fully automated.** When adding or changing a bundled image, follow the check in `docs/fields.md`: draw the AprilTag positions over it and look.
 
-`modern` real compile needs JDK 25. To run it, put a JDK 25 `javac` on your `PATH`, have a built alpha-6 project in the Gradle cache, and run `npm test`. Confirm the test shows as passed rather than skipped.
+These tests only compile. To run generated code against real WPILib, add a JUnit test to a copy of a robot project and run `./gradlew test`, using `JAVA_HOME=~/wpilib/<install>/jdk`. Initialize the HAL and set the alliance with `DriverStationSim`. The APIs differ between versions: 2027 alpha-8 uses `org.wpilib.hardware.hal.HAL.initialize()` with no arguments and `AllianceStationID.RED_1`, while 2026 uses `HAL.initialize(500, 0)` and `AllianceStationID.Red1`.
 
 End-to-end tests replace `dialog.showOpenDialog` because a native dialog can't be driven by a test, so the real dialog is only exercised by hand.
 
