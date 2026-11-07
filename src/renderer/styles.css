@@ -22,7 +22,7 @@
   --grid-major: #b9c7d4;
   --handle: #ffffff;
   --handle-stroke: #00213f;
-  --radius: 8px;
+  --radius: 5px;
   font-family: Barlow, system-ui, sans-serif;
   font-size: 14px;
 }
@@ -79,6 +79,15 @@ select {
 
 button:disabled {
   opacity: 0.45;
+}
+
+/* A custom arrow, because the browser's sits too close to the edge and can't be moved. */
+select {
+  appearance: none;
+  padding-right: 28px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%236f8aa3' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
 }
 
 button.active {
@@ -138,7 +147,7 @@ code,
 
 .toolbar button,
 .toolbar select {
-  background: transparent;
+  background-color: transparent;
   border-color: var(--navy-line);
   color: #ffffff;
   font-weight: 500;
@@ -151,7 +160,7 @@ code,
 
 .toolbar button.active,
 .toolbar button.primary {
-  background: var(--accent);
+  background-color: var(--accent);
   border-color: var(--accent);
   color: var(--accent-fg);
 }
@@ -336,7 +345,8 @@ button.icon {
 }
 
 .shape-list select {
-  padding: 2px 4px;
+  padding: 2px 24px 2px 6px;
+  background-position: right 7px center;
   font-size: 12px;
 }
 
@@ -620,7 +630,7 @@ button.primary {
   padding: 16px;
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 8px;
 }
 
 .dialog h2 {
