@@ -32,8 +32,20 @@ export function Toolbar({ onExport }: { onExport(): void }) {
   return (
     <header className="toolbar">
       <h1>RegionBool</h1>
-      <button type="button" onClick={() => void openProject()}>
-        Open robot project
+      <button
+        type="button"
+        className="project-button"
+        // The name keeps "Open robot project" for screen readers, since the visible text is just the folder.
+        aria-label={project ? `${project.name}. Open robot project` : 'Open robot project'}
+        title={
+          project
+            ? `${project.root}
+Click to open a different project`
+            : undefined
+        }
+        onClick={() => void openProject()}
+      >
+        {project ? project.name : 'Open robot project'}
       </button>
       <button
         type="button"

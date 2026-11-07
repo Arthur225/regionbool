@@ -164,6 +164,13 @@ code {
   color: var(--accent-fg);
 }
 
+.project-button {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .team-logo {
   height: 26px;
   margin-left: auto;

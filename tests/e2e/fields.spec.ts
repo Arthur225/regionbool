@@ -123,6 +123,20 @@ test('drawing still works over an image', async () => {
   expect(await numberValue('prop-cx')).toBe('5');
 });
 
+test('the open button shows the project name once one is open', async () => {
+  const button = page.getByRole('button', { name: 'Open robot project' });
+  await expect(button).toHaveText('Open robot project');
+  const root = createRobotProject();
+  await openProject(root);
+  await expect(button).toHaveText(basename(root));
+  await expect(button).toHaveAttribute('title', new RegExp('open a different project'));
+
+  // It still opens another project.
+  const other = createRobotProject();
+  await openProject(other);
+  await expect(button).toHaveText(basename(other));
+});
+
 test('the chosen field is saved with the project', async () => {
   const root = createRobotProject();
   await openProject(root);
