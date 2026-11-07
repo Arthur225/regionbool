@@ -41,14 +41,14 @@ const CLOSE_POLYGON_PIXELS = 12;
 const ROTATION_SNAP_DEGREES = 15;
 
 const REGION_COLORS = [
-  '#f59e0b',
-  '#22c55e',
-  '#a855f7',
-  '#06b6d4',
-  '#ec4899',
-  '#84cc16',
-  '#f97316',
-  '#6366f1',
+  '#E9B50B',
+  '#4CB4FF',
+  '#F0653A',
+  '#2BD4A7',
+  '#D56BFF',
+  '#9FE03C',
+  '#FF6FA8',
+  '#8C9BFF',
 ];
 
 /** Returns a region's display color, which depends only on its position in the list. */

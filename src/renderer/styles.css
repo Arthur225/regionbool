@@ -1,45 +1,47 @@
+/*
+ * Colors come from the UnderControl 1156 logo: team navy and team blue, with the team's yellow as
+ * a highlight. The top bar stays navy in both modes, so the app looks like the team's in either.
+ */
 :root {
   color-scheme: light dark;
-  --bg: #eef0f3;
+  --navy: #00213f;
+  --navy-line: #3b6a92;
+  --bg: #e6ecf2;
   --panel: #ffffff;
-  --raised: #f4f5f7;
-  --fg: #1b1f24;
-  --muted: #5b6470;
-  --border: #d7dbe0;
-  --accent: #2563eb;
+  --raised: #eef3f8;
+  --fg: #00213f;
+  --muted: #4a6178;
+  --border: #c6d3df;
+  --accent: #0b78c2;
   --accent-fg: #ffffff;
   --danger: #b91c1c;
-  --warning: #92400e;
+  --warning: #8a5a00;
   --success: #15803d;
-  --field: #f8f9fa;
-  --grid-minor: #e1e4e8;
-  --grid-major: #bcc2c9;
+  --field: #f7f9fb;
+  --grid-minor: #e1e8ee;
+  --grid-major: #b9c7d4;
   --handle: #ffffff;
-  --handle-stroke: #1b1f24;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    sans-serif;
-  font-size: 13px;
+  --handle-stroke: #00213f;
+  --radius: 8px;
+  font-family: Barlow, system-ui, sans-serif;
+  font-size: 14px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0f1216;
-    --panel: #181c21;
-    --raised: #22272e;
-    --fg: #e8eaed;
-    --muted: #9aa3ae;
-    --border: #2f353d;
-    --accent: #3b82f6;
+    --bg: #000f1e;
+    --panel: #001b34;
+    --raised: #00294d;
+    --fg: #dcebf7;
+    --muted: #9dbad2;
+    --border: #1b4468;
     --danger: #f87171;
-    --warning: #fbbf24;
-    --success: #4ade80;
-    --field: #14181d;
-    --grid-minor: #22282f;
-    --grid-major: #3a424c;
-    --handle: #0f1216;
+    --warning: #e9b50b;
+    --success: #7fe3a5;
+    --field: #00182e;
+    --grid-minor: #0d2c49;
+    --grid-major: #27517a;
+    --handle: #000f1e;
     --handle-stroke: #ffffff;
   }
 }
@@ -71,7 +73,7 @@ button,
 select {
   background: var(--raised);
   border: 1px solid var(--border);
-  border-radius: 5px;
+  border-radius: var(--radius);
   padding: 4px 9px;
 }
 
@@ -90,7 +92,7 @@ input[type='text'],
   min-width: 0;
   background: var(--raised);
   border: 1px solid var(--border);
-  border-radius: 5px;
+  border-radius: var(--radius);
   padding: 3px 6px;
 }
 
@@ -101,15 +103,20 @@ input[type='text'],
 
 h1 {
   margin: 0;
-  font-size: 15px;
+  font-size: 20px;
+  font-weight: 800;
 }
 
 h2 {
   margin: 0 0 8px;
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+code,
+.test-position {
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
 }
 
 .app {
@@ -124,8 +131,44 @@ h2 {
   align-items: center;
   gap: 10px;
   padding: 8px 12px;
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
+  background: var(--navy);
+  color: #ffffff;
+  color-scheme: dark;
+}
+
+.toolbar button,
+.toolbar select {
+  background: transparent;
+  border-color: var(--navy-line);
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.toolbar select option {
+  color: #00213f;
+  background: #ffffff;
+}
+
+.toolbar button.active,
+.toolbar button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+}
+
+.team-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+}
+
+.icon-tool {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 32px;
+  padding: 0;
 }
 
 .tool-group {
@@ -138,12 +181,12 @@ h2 {
 }
 
 .tool-group button:first-child {
-  border-radius: 5px 0 0 5px;
+  border-radius: var(--radius) 0 0 var(--radius);
   margin-left: 0;
 }
 
 .tool-group button:last-child {
-  border-radius: 0 5px 5px 0;
+  border-radius: 0 var(--radius) var(--radius) 0;
 }
 
 .snap-control {
@@ -171,7 +214,7 @@ h2 {
 .workspace {
   flex: 1;
   display: grid;
-  grid-template-columns: 250px minmax(0, 1fr) 250px;
+  grid-template-columns: 250px minmax(0, 1fr) 280px;
   min-height: 0;
 }
 
@@ -223,7 +266,7 @@ h2 {
   padding: 8px;
   margin-bottom: 6px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius);
 }
 
 .region-list > li.selected {
@@ -512,9 +555,8 @@ dd {
   display: flex;
   gap: 20px;
   padding: 4px 12px;
-  background: var(--panel);
-  border-top: 1px solid var(--border);
-  color: var(--muted);
+  background: var(--navy);
+  color: #c9dcec;
   font-size: 12px;
 }
 
@@ -548,13 +590,14 @@ button.primary {
   width: 100%;
   background: var(--raised);
   border: 1px solid var(--border);
-  border-radius: 5px;
+  border-radius: var(--radius);
   padding: 3px 6px;
   color: var(--fg);
 }
 
 .dirty-state {
-  color: var(--warning);
+  /* Always on the navy bar, so it doesn't follow the light and dark warning colors. */
+  color: #e9b50b;
 }
 
 .dialog-backdrop {
@@ -577,7 +620,7 @@ button.primary {
   padding: 16px;
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 12px;
 }
 
 .dialog h2 {
@@ -625,7 +668,7 @@ button.primary {
   overflow: auto;
   padding: 8px 0;
   background: var(--raised);
-  border-radius: 5px;
+  border-radius: var(--radius);
   font-family: ui-monospace, Menlo, monospace;
   font-size: 12px;
   line-height: 1.45;
@@ -652,7 +695,7 @@ button.primary {
 .usage {
   padding: 8px 10px;
   background: var(--raised);
-  border-radius: 5px;
+  border-radius: var(--radius);
 }
 
 .field-caption {

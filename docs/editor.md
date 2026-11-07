@@ -2,6 +2,10 @@
 
 The renderer has three parts: `store.ts` holds the state, `canvas/FieldCanvas.tsx` turns pointer input into changes, and `panels/` shows and edits the same state.
 
+## Look
+
+Colors are CSS variables at the top of `styles.css`, taken from the UnderControl 1156 logo: team navy and blue, with the team's yellow as a highlight. The top and bottom bars stay navy in both light and dark mode. Barlow and JetBrains Mono are bundled through `@fontsource`, so the app needs no network at competitions. Field images keep square corners, and region outlines stay exact, because their corners are the real boundaries.
+
 ## Coordinates
 
 The SVG's `viewBox` is in meters, so shapes are drawn at their real coordinates and the browser handles scaling. WPILib's +y points up the screen and SVG's points down, so `sy(y) = width - y` is the only conversion. Rectangles are drawn from `rectCorners` as polygons rather than with SVG transforms, which keeps rotation in one place.

@@ -92,4 +92,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). [AGENTS.md](AGENTS.md) maps the code and
 
 [MIT](LICENSE): you can do what you want with RegionBool, as long as you keep the copyright and license notice.
 
-Java code that RegionBool generates in your project is yours, with no notice needed. Field images come from WPILib and others, aren't this project's work and aren't covered by this license. See [resources/fields/SOURCES.md](resources/fields/SOURCES.md).
+Java code that RegionBool generates in your project is yours, with no notice needed. Field images come from WPILib and others, aren't this project's work and aren't covered by this license. See [resources/fields/SOURCES.md](resources/fields/SOURCES.md). The UnderControl 1156 logo belongs to the team, and the bundled fonts are under the [SIL Open Font License](resources/third-party).
