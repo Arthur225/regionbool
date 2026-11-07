@@ -5,7 +5,7 @@
  * left out of the package, resources in the wrong place, and dependencies that weren't included.
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { expect, test, type ElectronApplication, type Page } from '@playwright/test';
 import {
   chooseFolderInDialog,
@@ -93,6 +93,14 @@ test('includes the bundled fonts, so it works offline', async () => {
     return [...fonts].filter((font) => font.status === 'loaded').map((font) => font.family);
   });
   expect(loaded.join()).toContain('Barlow');
+});
+
+test('uses the RegionBool icon on macOS', () => {
+  test.skip(process.platform !== 'darwin', 'Other systems embed the icon differently');
+  const resources = join(dirname(packagedExecutable()), '../Resources');
+  // electron-builder only writes icon.icns when it found our icon. Electron's own is electron.icns.
+  expect(existsSync(join(resources, 'icon.icns'))).toBe(true);
+  expect(existsSync(join(resources, 'electron.icns'))).toBe(false);
 });
 
 test('keeps the sandbox on', async () => {

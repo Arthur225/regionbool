@@ -56,6 +56,14 @@ function createWindow(): BrowserWindow {
 }
 
 void app.whenReady().then(() => {
+  // Packaged apps get their icon from electron-builder. Without this, development shows Electron's.
+  if (!app.isPackaged) {
+    try {
+      app.dock?.setIcon(join(app.getAppPath(), 'build/icon.png'));
+    } catch {
+      // Only cosmetic, so it must never stop the app from starting.
+    }
+  }
   registerIpcHandlers();
   createWindow();
 

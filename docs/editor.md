@@ -6,6 +6,8 @@ The renderer has three parts: `store.ts` holds the state, `canvas/FieldCanvas.ts
 
 Colors are CSS variables at the top of `styles.css`, taken from the team's logos: team navy and blue, with the team's yellow as a highlight. The top and bottom bars stay navy in both light and dark mode. The Team 1156 logo is white on a transparent background, so it works on any bar color. Barlow and JetBrains Mono are bundled through `@fontsource`, so the app needs no network at competitions. Field images keep square corners, and region outlines stay exact, because their corners are the real boundaries.
 
+The app icon is `build/icon.svg`, a drawn region with a point inside it. `build/icon.png` is its 1024 px render, which electron-builder turns into each system's icon format. If you change the SVG, render the PNG again.
+
 ## Coordinates
 
 The SVG's `viewBox` is in meters, so shapes are drawn at their real coordinates and the browser handles scaling. WPILib's +y points up the screen and SVG's points down, so `sy(y) = width - y` is the only conversion. Rectangles are drawn from `rectCorners` as polygons rather than with SVG transforms, which keeps rotation in one place.
