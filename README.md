@@ -1,5 +1,7 @@
 # RegionBool
 
+<img src="build/icon.png" alt="RegionBool logo" width="120">
+
 Draw regions on an FRC field, and get a boolean Java method for each one in your WPILib robot project.
 
 Instead of hand-writing and guessing at coordinate checks, you draw the area on the field and call the generated method:

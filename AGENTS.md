@@ -57,6 +57,7 @@ Every path in this table must exist. `tests/unit/docs.test.ts` fails if one does
 | `resources/fields/`                          | Bundled field definitions and images, with sources in `SOURCES.md`        |
 | `tests/unit/`                                | Vitest tests                                                              |
 | `tests/packaged/`                            | Tests that run against the packaged app                                   |
+| `build/icon.svg`                             | App icon source, rendered to `build/icon.png` for packaging               |
 | `electron-builder.yml`                       | Packaging settings                                                        |
 | `.github/workflows/release.yml`              | Tests and builds on all systems, and creates draft releases               |
 | `tests/e2e/`                                 | Playwright tests that launch the real Electron app                        |
