@@ -33,6 +33,7 @@ Every path in this table must exist. `tests/unit/docs.test.ts` fails if one does
 | `src/main/export.ts`                         | Validates region data, generates code, applies overwrite rules            |
 | `src/main/regionsFile.ts`                    | Reads and saves `.regionbool/regions.json`, never over an unreadable file |
 | `src/main/writer.ts`                         | Atomic writes that can't leave the project                                |
+| `src/main/settings.ts`                       | Per-computer app settings, such as the last project                       |
 | `src/main/fields.ts`                         | Loads field definitions and images                                        |
 | `src/preload/index.ts`                       | Bridge that exposes `window.regionbool` to the renderer                   |
 | `src/preload/api.d.ts`                       | Type declaration for `window.regionbool`                                  |

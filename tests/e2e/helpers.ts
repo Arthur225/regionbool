@@ -10,9 +10,12 @@ import { _electron as electron, type ElectronApplication, type Page } from '@pla
  */
 export async function launchApp(
   executablePath?: string,
+  userDataDir: string = createFolder({}),
 ): Promise<{ app: ElectronApplication; page: Page }> {
+  // A private settings folder, so tests never read or overwrite the developer's own settings.
+  const settings = `--user-data-dir=${userDataDir}`;
   const app = await electron.launch(
-    executablePath ? { executablePath, args: [] } : { args: ['.'] },
+    executablePath ? { executablePath, args: [settings] } : { args: ['.', settings] },
   );
   await setUnsavedPromptAnswer(app, 0);
   const page = await app.firstWindow();

@@ -1,5 +1,6 @@
 /** Actions that involve both the main process and the editor state. */
 import type { FieldDefinition } from '../shared/fields';
+import type { OpenProjectResult } from '../shared/ipc';
 import type { FieldInfo, OutputInfo, RegionProject } from '../shared/model';
 import { createEmptyDocument, useEditor } from './store';
 
@@ -84,13 +85,22 @@ export async function openProject(): Promise<void> {
     });
     return;
   }
+  await applyOpenedProject(result, before.project !== null, dirty);
+}
 
+/** Loads what was opened into the editor, without losing work unless the user agrees. */
+async function applyOpenedProject(
+  result: Extract<OpenProjectResult, { status: 'opened' }>,
+  hadProject: boolean,
+  dirty: boolean,
+): Promise<void> {
+  const editor = useEditor.getState();
   const { project, saved } = result;
   const output = { packageName: project.defaultPackageName, className: 'FieldRegions' };
 
   if (saved.status === 'loaded') {
     if (
-      !before.project &&
+      !hadProject &&
       dirty &&
       !window.confirm(`Replace your drawing with the regions saved in ${project.name}?`)
     ) {
@@ -100,7 +110,7 @@ export async function openProject(): Promise<void> {
       return;
     }
     editor.reset(saved.project);
-  } else if (!before.project && dirty) {
+  } else if (!hadProject && dirty) {
     editor.setOutput(output);
   } else {
     editor.reset(blankDocument(output));
@@ -120,4 +130,15 @@ export async function openProject(): Promise<void> {
         }
       : null,
   );
+}
+
+/**
+ * Reopens the project from the last run at startup. Does nothing if the user has already begun,
+ * so a slow start can't replace what they're drawing.
+ */
+export async function reopenLastProject(): Promise<void> {
+  const before = useEditor.getState();
+  if (before.doc !== before.savedDoc || before.project) return;
+  const result = await window.regionbool.openLastProject();
+  if (result.status === 'opened') await applyOpenedProject(result, false, false);
 }

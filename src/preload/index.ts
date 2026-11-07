@@ -8,6 +8,7 @@ import { IpcChannel, type RegionBoolApi } from '../shared/ipc';
 const api: RegionBoolApi = {
   getAppInfo: () => ipcRenderer.invoke(IpcChannel.GetAppInfo),
   openProject: () => ipcRenderer.invoke(IpcChannel.OpenProject),
+  openLastProject: () => ipcRenderer.invoke(IpcChannel.OpenLastProject),
   closeProject: () => ipcRenderer.invoke(IpcChannel.CloseProject),
   saveRegions: (project) => ipcRenderer.invoke(IpcChannel.SaveRegions, project),
   getCurrentProject: () => ipcRenderer.invoke(IpcChannel.GetCurrentProject),

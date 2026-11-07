@@ -44,7 +44,7 @@ Builds aren't signed with a developer certificate yet, so your system will warn 
 
 ## How to use it
 
-1. **Open your robot project** with **Open robot project**. RegionBool works out which WPILib imports your project uses, and the button then shows the project's name. Click it again to open a different one.
+1. **Open your robot project** with **Open robot project**. RegionBool works out which WPILib imports your project uses, and the button then shows the project's name. Click it again to open a different one. The next time you start RegionBool, it reopens your last project.
 2. **Pick the field** in the right panel. 2025 and 2026 have separate welded and AndyMark fields, because their sizes differ. Check which your event uses.
 3. **Draw.** Pick a shape tool and draw on the field. Your first shape creates a region. Use **Cut hole** to subtract from it, and the panels on either side to rename it or type exact values.
 4. **Check it.** Compare the outlines with the field image, and type exact values when precision matters, since the image is a guide. Regions that flip are drawn on the blue side here, and the generated code moves them on red.

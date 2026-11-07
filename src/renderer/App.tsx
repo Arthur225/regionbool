@@ -1,7 +1,7 @@
 /** Root component: lays out the editor and handles keyboard shortcuts. */
 import { useEffect, useState } from 'react';
 import type { AppInfo } from '../shared/ipc';
-import { refreshFields, saveProject } from './actions';
+import { refreshFields, reopenLastProject, saveProject } from './actions';
 import { FieldCanvas } from './canvas/FieldCanvas';
 import { ExportDialog } from './dialogs/ExportDialog';
 import { FieldImportDialog } from './dialogs/FieldImportDialog';
@@ -106,7 +106,7 @@ export function App() {
   useEffect(() => {
     void window.regionbool.getAppInfo().then(setInfo);
     // A reloaded page starts empty, so the main process must not keep a project it would save over.
-    void window.regionbool.closeProject().then(refreshFields);
+    void window.regionbool.closeProject().then(refreshFields).then(reopenLastProject);
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, []);

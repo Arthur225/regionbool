@@ -59,6 +59,8 @@ Opening a project follows these rules, so work is only lost after a confirmation
 
 Reloading the page closes the project in the main process, because a fresh empty editor must not be able to save over it.
 
+At startup, the app reopens the last project. The main process remembers its path in `settings.json` in Electron's user data folder and reads it itself, so the renderer still never names a folder. This happens once per launch, so reloading still starts empty. A project that was moved or deleted is forgotten quietly. Tests pass `--user-data-dir`, so they can't touch a developer's real settings.
+
 ## Fields
 
 The app starts on the newest field, without counting that as a change. `FieldCanvas` loads the image for `field.fieldId` and places it so its marked corners land on the field's corners, turning it 180° about the field's center if the definition says so. See `docs/fields.md` for why that matters.

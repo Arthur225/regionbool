@@ -45,6 +45,7 @@ The renderer will display data read from robot projects, such as region names an
 | --------------------- | --------------------------------------------------------------------- |
 | `app:get-info`        | Returns the app and Electron versions                                 |
 | `project:open`        | Shows a folder picker and makes the choice the current project        |
+| `project:open-last`   | Reopens the remembered project, once per launch                       |
 | `project:close`       | Forgets the current project, leaving the disk unchanged               |
 | `project:save`        | Saves region data to `.regionbool/regions.json`                       |
 | `project:get-current` | Returns the current project                                           |
@@ -57,14 +58,15 @@ The renderer never sends a path or file contents. It can't name a folder, only a
 
 ## Main process modules
 
-| Module       | Responsibility                                                     | Imports Electron |
-| ------------ | ------------------------------------------------------------------ | ---------------- |
-| `index.ts`   | Window and app lifecycle                                           | Yes              |
-| `ipc.ts`     | Channel handlers, and holds the current project                    | Yes              |
-| `project.ts` | Recognizes WPILib Java projects and detects the import profile     | No               |
-| `export.ts`  | Validates region data, generates code, applies the overwrite rules | No               |
-| `writer.ts`  | Atomic writes that can't leave the project                         | No               |
-| `fields.ts`  | Loads field definitions and images                                 | No               |
+| Module        | Responsibility                                                     | Imports Electron |
+| ------------- | ------------------------------------------------------------------ | ---------------- |
+| `index.ts`    | Window and app lifecycle                                           | Yes              |
+| `ipc.ts`      | Channel handlers, and holds the current project                    | Yes              |
+| `project.ts`  | Recognizes WPILib Java projects and detects the import profile     | No               |
+| `export.ts`   | Validates region data, generates code, applies the overwrite rules | No               |
+| `writer.ts`   | Atomic writes that can't leave the project                         | No               |
+| `settings.ts` | Remembers the last project for this computer                       | No               |
+| `fields.ts`   | Loads field definitions and images                                 | No               |
 
 Modules that don't import Electron can be tested directly with Vitest.
 

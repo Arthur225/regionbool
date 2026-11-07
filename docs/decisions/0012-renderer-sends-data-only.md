@@ -12,4 +12,4 @@ The renderer displays data from robot projects, so it's the part most exposed to
 
 ## Consequences
 
-The main process has to hold the current project, so only one can be open per app instance. Features like a recent-projects list need care, because reopening one without a dialog can't simply accept a path from the renderer.
+The main process has to hold the current project, so only one can be open per app instance. Reopening the last project at startup follows this too: the main process reads the path from its own settings, and the renderer only asks it to try. A recent-projects list would need the same care.
