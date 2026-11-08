@@ -1,7 +1,7 @@
 {
   "name": "regionbool",
   "productName": "RegionBool",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Draw FRC field regions and generate boolean Java methods for WPILib projects",
   "private": true,
   "license": "SEE LICENSE IN LICENSE",
