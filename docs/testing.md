@@ -11,7 +11,7 @@
 | Docs             | `tests/unit/docs.test.ts`            | The `AGENTS.md` map and decisions index aren't stale                             | Node             |
 | End to end       | `tests/e2e/`                         | The real app launches securely, opens projects, and the export flow reaches disk | Built app        |
 
-`npm run check` runs everything except the end-to-end and packaged tests. `npm run test:e2e` and `npm run test:packaged` run those. `.github/workflows/release.yml` runs all of them on Windows, macOS and Linux, but only for tags and pull requests that change packaging.
+`npm run check` runs everything except the end-to-end and packaged tests. `npm run test:e2e` and `npm run test:packaged` run those. `.github/workflows/ci.yml` runs the checks and end-to-end tests on Windows, macOS and Linux for every pull request and every push to `main`. `.github/workflows/release.yml` also runs the packaged tests and builds installers, but only for tags and pull requests that change packaging.
 
 ## Java cross-check
 
