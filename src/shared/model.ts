@@ -1,9 +1,10 @@
 /**
  * The region data model and its validation rules.
  *
- * All coordinates and lengths are WPILib field coordinates in meters: the origin is at the
- * blue alliance wall, +x points toward red, and +y points to the left seen from blue.
- * The on-disk form of {@link RegionProject} is described by `schemas/regions.schema.json`.
+ * All stored coordinates and lengths are in meters, with the origin at the blue alliance wall's
+ * right corner, +x toward red, and +y to the left seen from blue. Projects that use the field-center
+ * system ({@link FieldOrigin}) are still stored this way: only the editor's numbers and the generated
+ * code convert. The on-disk form of {@link RegionProject} is described by `schemas/regions.schema.json`.
  */
 
 import type { JavaProfileId } from './javaProfiles';
@@ -100,6 +101,14 @@ export interface FieldInfo {
   fieldId?: string;
 }
 
+/**
+ * The field coordinate system the robot code uses.
+ * - `blue-corner`: origin at the blue alliance wall's right corner, +x toward red.
+ * - `center`: origin at the field's center, +x toward blue. This is the blue-corner system turned
+ *   180 degrees about the center, so converting either way is `(L/2 - x, W/2 - y)`.
+ */
+export type FieldOrigin = 'blue-corner' | 'center';
+
 /** Where the generated class goes. */
 export interface OutputInfo {
   /** Java package, such as `frc.robot.generated`. */
@@ -108,6 +117,8 @@ export interface OutputInfo {
   className: string;
   /** The WPILib API the user confirmed for this project. If missing, the app detects it. */
   javaProfile?: JavaProfileId;
+  /** The robot code's coordinate system. Missing means `blue-corner`. */
+  fieldOrigin?: FieldOrigin;
 }
 
 /** Everything saved for one robot project in `.regionbool/regions.json`. */

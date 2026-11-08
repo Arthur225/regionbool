@@ -19,3 +19,4 @@ Short notes on why the project is built the way it is. Add a new numbered file f
 - [0015: Publish struct outlines, and ignore formatting in hand-edit checks](0015-struct-outlines-and-formatters.md)
 - [0016: Use the MIT license](0016-mit-license.md)
 - [0017: Use the team's look, in the original layout](0017-team-look.md)
+- [0018: Offer a field-center coordinate option](0018-field-origin-option.md)

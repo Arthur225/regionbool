@@ -6,10 +6,14 @@
 
 1. The header line (`GENERATED_HEADER`), which the writer will use to avoid overwriting hand-written files
 2. Package and imports, including alliance imports only if a region needs them
-3. Private constants: the edge tolerance, field size if flipping needs it, and one pair of arrays per polygon
+3. Private constants: the edge tolerance, field size if flipping needs it, half the field size for a `center` origin, and one pair of arrays per polygon
 4. Two public methods per region, taking `Pose2d` and `Translation2d`. The `Pose2d` one delegates
 5. `publishToNetworkTables()`, `publishTo(Field2d)` and `forEachOutline(consumer)`, which expose the outlines (see below)
 6. Private helpers, only those the project uses: `isRedAlliance`, `inRect`, `inCircle`, `inPolygon`, plus `acceptOutline`
+
+## Field origin
+
+With `output.fieldOrigin` set to `center`, each check first converts the robot's point to stored coordinates (`HALF_FIELD_LENGTH_METERS - x`, `HALF_FIELD_WIDTH_METERS - y`), then flips it for red if needed, then tests the shapes. Outlines go the other way: flip, then convert. The class Javadoc states which system the class expects. With the default `blue-corner`, none of this is generated. See [data-model.md](data-model.md#coordinates).
 
 ## Publishing outlines
 

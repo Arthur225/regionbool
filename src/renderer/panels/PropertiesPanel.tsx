@@ -1,8 +1,15 @@
 /** The right panel: exact values for the selected shape, the field's settings and the project. */
 import type { ProjectInfo } from '../../shared/ipc';
 import { JAVA_PROFILES } from '../../shared/javaProfiles';
-import type { FieldInfo, FieldSymmetry, PolygonShape, Shape } from '../../shared/model';
+import type {
+  FieldInfo,
+  FieldOrigin,
+  FieldSymmetry,
+  PolygonShape,
+  Shape,
+} from '../../shared/model';
 import { fieldInfoFrom } from '../actions';
+import { useAxisConverter } from '../coordinates';
 import { useEditor } from '../store';
 import { NumberField } from './NumberField';
 
@@ -24,6 +31,7 @@ function profileLabel(project: ProjectInfo): string {
 }
 
 function VertexFields({ shape, update }: { shape: PolygonShape; update(shape: Shape): void }) {
+  const shown = useAxisConverter();
   return (
     <>
       {shape.points.map((point, index) => (
@@ -31,22 +39,22 @@ function VertexFields({ shape, update }: { shape: PolygonShape; update(shape: Sh
           <NumberField
             label={`P${index + 1} x`}
             unit="m"
-            value={point.x}
+            value={shown.x(point.x)}
             onCommit={(x) =>
               update({
                 ...shape,
-                points: shape.points.map((p, i) => (i === index ? { ...p, x } : p)),
+                points: shape.points.map((p, i) => (i === index ? { ...p, x: shown.x(x) } : p)),
               })
             }
           />
           <NumberField
             label="y"
             unit="m"
-            value={point.y}
+            value={shown.y(point.y)}
             onCommit={(y) =>
               update({
                 ...shape,
-                points: shape.points.map((p, i) => (i === index ? { ...p, y } : p)),
+                points: shape.points.map((p, i) => (i === index ? { ...p, y: shown.y(y) } : p)),
               })
             }
           />
@@ -61,6 +69,7 @@ function VertexFields({ shape, update }: { shape: PolygonShape; update(shape: Sh
 
 function ShapeFields({ shape }: { shape: Shape }) {
   const update = useEditor.getState().updateShape;
+  const shown = useAxisConverter();
   switch (shape.kind) {
     case 'rect':
       return (
@@ -71,15 +80,15 @@ function ShapeFields({ shape }: { shape: Shape }) {
               label="x"
               unit="m"
               testId="prop-cx"
-              value={shape.cx}
-              onCommit={(cx) => update({ ...shape, cx })}
+              value={shown.x(shape.cx)}
+              onCommit={(cx) => update({ ...shape, cx: shown.x(cx) })}
             />
             <NumberField
               label="y"
               unit="m"
               testId="prop-cy"
-              value={shape.cy}
-              onCommit={(cy) => update({ ...shape, cy })}
+              value={shown.y(shape.cy)}
+              onCommit={(cy) => update({ ...shape, cy: shown.y(cy) })}
             />
           </div>
           <div className="field-row">
@@ -118,15 +127,15 @@ function ShapeFields({ shape }: { shape: Shape }) {
               label="x"
               unit="m"
               testId="prop-cx"
-              value={shape.cx}
-              onCommit={(cx) => update({ ...shape, cx })}
+              value={shown.x(shape.cx)}
+              onCommit={(cx) => update({ ...shape, cx: shown.x(cx) })}
             />
             <NumberField
               label="y"
               unit="m"
               testId="prop-cy"
-              value={shape.cy}
-              onCommit={(cy) => update({ ...shape, cy })}
+              value={shown.y(shape.cy)}
+              onCommit={(cy) => update({ ...shape, cy: shown.y(cy) })}
             />
           </div>
           <NumberField
@@ -268,6 +277,23 @@ export function PropertiesPanel({ onImportField }: { onImportField(): void }) {
                 editor.setOutput({ ...doc.output, className: event.target.value })
               }
             />
+          </label>
+          <label className="inline-field">
+            Coordinates
+            <select
+              aria-label="Field coordinates"
+              data-testid="output-origin"
+              value={doc.output.fieldOrigin ?? 'blue-corner'}
+              onChange={(event) =>
+                editor.setOutput({
+                  ...doc.output,
+                  fieldOrigin: event.target.value as FieldOrigin,
+                })
+              }
+            >
+              <option value="blue-corner">Origin at blue corner</option>
+              <option value="center">Origin at field center</option>
+            </select>
           </label>
         </section>
       )}

@@ -33,6 +33,21 @@ describe('generateJava', () => {
     );
   });
 
+  it('converts center-origin poses before checking, and outlines back', async () => {
+    const base = sampleProject();
+    const project = { ...base, output: { ...base.output, fieldOrigin: 'center' as const } };
+    const java = generateJava(project, modern);
+    await expect(java).toMatchFileSnapshot('__snapshots__/center.java.snap');
+    const half = (value: number) => javaDouble(value / 2);
+    expect(java).toContain(
+      `private static final double HALF_FIELD_LENGTH_METERS = ${half(base.field.lengthMeters)};`,
+    );
+    expect(java).toContain('double x = HALF_FIELD_LENGTH_METERS - point.getX();');
+    expect(java).toContain('x = HALF_FIELD_LENGTH_METERS - x;');
+    expect(java).toContain('origin at the\n * center of the field');
+    expect(generateJava(base, modern)).not.toContain('HALF_FIELD');
+  });
+
   it('starts with the header the safe writer relies on', () => {
     expect(generateJava(sampleProject(), legacy).startsWith(`${GENERATED_HEADER}\n`)).toBe(true);
   });

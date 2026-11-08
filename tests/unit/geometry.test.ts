@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  convertOrigin,
   flipPoint,
   regionContains,
   regionContainsForAlliance,
+  regionContainsForRobot,
   shapeContains,
 } from '../../src/shared/geometry';
 import type { FieldInfo, Region, Shape } from '../../src/shared/model';
@@ -161,5 +163,39 @@ describe('alliance flipping', () => {
     const fixed: Region = { ...relative, allianceMode: 'fixed' };
     expect(regionContainsForAlliance(fixed, 1, 1, 'red', rotational)).toBe(true);
     expect(regionContainsForAlliance(fixed, 15, 7, 'red', rotational)).toBe(false);
+  });
+});
+
+describe('field origin', () => {
+  const field: FieldInfo = { lengthMeters: 16, widthMeters: 8, symmetry: 'rotational' };
+
+  it('leaves blue-corner coordinates alone', () => {
+    expect(convertOrigin({ x: 3, y: 2 }, field, 'blue-corner')).toEqual({ x: 3, y: 2 });
+  });
+
+  it('puts the origin at the center, with +x toward blue', () => {
+    expect(convertOrigin({ x: 8, y: 4 }, field, 'center')).toEqual({ x: 0, y: 0 });
+    expect(convertOrigin({ x: 0, y: 0 }, field, 'center')).toEqual({ x: 8, y: 4 });
+    expect(convertOrigin({ x: 16, y: 8 }, field, 'center')).toEqual({ x: -8, y: -4 });
+  });
+
+  it('converts back with the same formula', () => {
+    const point = { x: 3.25, y: 6.5 };
+    expect(convertOrigin(convertOrigin(point, field, 'center'), field, 'center')).toEqual(point);
+  });
+
+  it('checks robot points in the chosen system', () => {
+    const region: Region = {
+      id: 'r',
+      name: 'Zone',
+      allianceMode: 'alliance-relative',
+      shapes: [{ ...(rect() as Extract<Shape, { kind: 'rect' }>), cx: 2, cy: 2 }],
+    };
+    // Stored (2, 2) is (6, 2) in center coordinates.
+    expect(regionContainsForRobot(region, 6, 2, 'blue', field, 'center')).toBe(true);
+    expect(regionContainsForRobot(region, 2, 2, 'blue', field, 'center')).toBe(false);
+    // On red the region is at stored (14, 6), which is (-6, -2) in center coordinates.
+    expect(regionContainsForRobot(region, -6, -2, 'red', field, 'center')).toBe(true);
+    expect(regionContainsForRobot(region, 6, 2, 'red', field, 'center')).toBe(false);
   });
 });

@@ -92,6 +92,12 @@ function regionMethods(project: RegionProject, region: Region, regionIndex: numb
   const flipBlock = flips
     ? `\n    if (isRedAlliance()) {\n      x = FIELD_LENGTH_METERS - x;${flipY}\n    }`
     : '';
+  const read =
+    project.output.fieldOrigin === 'center'
+      ? `double x = HALF_FIELD_LENGTH_METERS - point.getX();
+    double y = HALF_FIELD_WIDTH_METERS - point.getY();`
+      : `double x = point.getX();
+    double y = point.getY();`;
   return `  /**
    * Returns whether a robot pose is inside the region "${name}".
    *
@@ -107,8 +113,7 @@ function regionMethods(project: RegionProject, region: Region, regionIndex: numb
    * <p>${allianceDoc}
    */
   public static boolean ${method}(Translation2d point) {
-    double x = point.getX();
-    double y = point.getY();${flipBlock}
+    ${read}${flipBlock}
     return ${regionExpression(region, regionIndex)};
   }`;
 }
@@ -175,6 +180,10 @@ function outlineMethods(project: RegionProject, usesAlliance: boolean): string {
   const flipBlock = usesAlliance
     ? `\n      if (flip) {\n        x = FIELD_LENGTH_METERS - x;${flipY}\n      }`
     : '';
+  const convertBlock =
+    project.output.fieldOrigin === 'center'
+      ? '\n      x = HALF_FIELD_LENGTH_METERS - x;\n      y = HALF_FIELD_WIDTH_METERS - y;'
+      : '';
   return `  /**
    * Publishes every region to NetworkTables as struct arrays under RegionBool/, which is the format
    * AdvantageScope recommends. This allocates, so call it at startup or when the alliance changes,
@@ -215,7 +224,7 @@ ${calls.join('\n')}
     Pose2d[] poses = new Pose2d[xs.length + 1];
     for (int i = 0; i < poses.length; i++) {
       double x = xs[i % xs.length];
-      double y = ys[i % ys.length];${flipBlock}
+      double y = ys[i % ys.length];${flipBlock}${convertBlock}
       poses[i] = new Pose2d(x, y, new Rotation2d());
     }
     consumer.accept(name, poses);
@@ -273,6 +282,12 @@ export function generateJava(project: RegionProject, profile: JavaProfile): stri
       `  private static final double FIELD_WIDTH_METERS = ${javaDouble(field.widthMeters)};`,
     );
   }
+  if (output.fieldOrigin === 'center') {
+    constants.push(
+      `  private static final double HALF_FIELD_LENGTH_METERS = ${javaDouble(field.lengthMeters / 2)};`,
+      `  private static final double HALF_FIELD_WIDTH_METERS = ${javaDouble(field.widthMeters / 2)};`,
+    );
+  }
   regions.forEach((region, regionIndex) => {
     region.shapes.forEach((shape, shapeIndex) => {
       if (shape.kind !== 'triangle' && shape.kind !== 'polygon') return;
@@ -308,6 +323,14 @@ export function generateJava(project: RegionProject, profile: JavaProfile): stri
     ...helpers,
   ];
 
+  const classDoc =
+    output.fieldOrigin === 'center'
+      ? `/**
+ * Field regions drawn in RegionBool. Poses are field coordinates in meters with the origin at the
+ * center of the field and +x toward the blue alliance wall.
+ */`
+      : '/** Field regions drawn in RegionBool. Coordinates are WPILib field coordinates in meters. */';
+
   return `${GENERATED_HEADER}
 // Source: .regionbool/regions.json
 
@@ -315,7 +338,7 @@ package ${output.packageName};
 
 ${imports.join('\n')}
 
-/** Field regions drawn in RegionBool. Coordinates are WPILib field coordinates in meters. */
+${classDoc}
 public final class ${output.className} {
 ${members.join('\n\n')}
 }

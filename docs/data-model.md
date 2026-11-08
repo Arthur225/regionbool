@@ -4,7 +4,16 @@ The types are in `src/shared/model.ts`, and `schemas/regions.schema.json` descri
 
 ## Coordinates
 
-All positions and lengths use WPILib field coordinates in meters: the origin is at the blue alliance wall, +x points toward red, and +y points to the left as seen from blue. Pixels exist only in the rendering layer.
+All stored positions and lengths are in meters, with the origin at the blue alliance wall's right corner, +x toward red, and +y to the left as seen from blue. Pixels exist only in the rendering layer.
+
+Robot code can use either of two field coordinate systems, chosen per project with `output.fieldOrigin`:
+
+| `fieldOrigin`           | Origin                                | +x points toward |
+| ----------------------- | ------------------------------------- | ---------------- |
+| `blue-corner` (default) | The blue alliance wall's right corner | Red              |
+| `center`                | The center of the field               | Blue             |
+
+The center system is the blue-corner one turned 180° about the center, so `convertOrigin` in `geometry.ts` converts either way with `(L/2 - x, W/2 - y)`. Regions are always stored in blue-corner coordinates, whichever system the project uses. Only the numbers the editor shows and the generated code convert, so changing the option never rewrites shapes.
 
 ## Structure
 
@@ -12,7 +21,7 @@ All positions and lengths use WPILib field coordinates in meters: the origin is 
 RegionProject
 ├── version          File format version, currently 1
 ├── field            lengthMeters, widthMeters, symmetry, fieldId (optional)
-├── output           packageName, className, javaProfile (optional)
+├── output           packageName, className, javaProfile and fieldOrigin (both optional)
 ├── generatedHash    Hash of the last exported file (optional, see below)
 └── regions[]
     ├── id, name
@@ -58,6 +67,7 @@ There are two layers, because files can be edited by hand or come from anywhere:
 - **A file that can't be understood is never overwritten.** That covers broken JSON, a schema failure and a newer version. The app shows why, and saving and exporting are refused until someone fixes or removes the file.
 - **`fieldId`** names the field definition in use. Changing the size by hand removes it, because the image would no longer match. If the definition can't be found, the saved size and symmetry still apply, on a blank grid.
 - **`javaProfile`** is the WPILib API chosen in the export dialog. Without it, the app detects one.
+- **`fieldOrigin`** is the robot code's coordinate system. Without it, the project uses `blue-corner`.
 - **`generatedHash`** is a SHA-256 of the Java code from the last export, ignoring comments and formatting, used to notice hand edits. The main process owns it: it never goes to the renderer, and any value the renderer sends is ignored.
 - **Formatting is stable,** with 2-space indentation and a final newline, so git diffs stay readable.
 

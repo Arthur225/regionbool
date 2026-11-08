@@ -5,7 +5,15 @@
  * these functions on every point, including exact edges. If you change one, change the other.
  * `tests/unit/java-crosscheck.test.ts` compiles and runs the Java to prove they match.
  */
-import type { FieldInfo, Point, PolygonShape, RectShape, Region, Shape } from './model';
+import type {
+  FieldInfo,
+  FieldOrigin,
+  Point,
+  PolygonShape,
+  RectShape,
+  Region,
+  Shape,
+} from './model';
 
 /**
  * How close to an edge a point can be and still count as on it, in meters. Keeps a point exactly
@@ -133,4 +141,31 @@ export function regionContainsForAlliance(
     return regionContains(region, flipped.x, flipped.y);
   }
   return regionContains(region, x, y);
+}
+
+/**
+ * Converts between stored coordinates (blue corner) and the robot code's coordinate system. The
+ * field-center system is the blue-corner one turned 180 degrees about the center, so the same
+ * formula converts both ways. Generated Java does exactly this arithmetic, with `L/2` and `W/2`
+ * embedded as constants.
+ */
+export function convertOrigin(point: Point, field: FieldInfo, origin: FieldOrigin): Point {
+  if (origin === 'blue-corner') return point;
+  return { x: field.lengthMeters / 2 - point.x, y: field.widthMeters / 2 - point.y };
+}
+
+/**
+ * Returns the same answer the generated Java method gives for a point in the robot code's
+ * coordinate system: the point is converted to stored coordinates, then flipped if needed.
+ */
+export function regionContainsForRobot(
+  region: Region,
+  x: number,
+  y: number,
+  alliance: AllianceState,
+  field: FieldInfo,
+  origin: FieldOrigin,
+): boolean {
+  const stored = convertOrigin({ x, y }, field, origin);
+  return regionContainsForAlliance(region, stored.x, stored.y, alliance, field);
 }

@@ -23,6 +23,7 @@ import {
   snapValue,
   translateShape,
 } from '../../shared/shapeOps';
+import { useAxisConverter } from '../coordinates';
 import { useEditor } from '../store';
 
 interface LoadedImage {
@@ -164,6 +165,7 @@ export function FieldCanvas() {
   const { lengthMeters: length, widthMeters: width } = field;
   const sy = (y: number) => width - y;
   const unit = 1 / pixelsPerMeter;
+  const shown = useAxisConverter();
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -494,7 +496,7 @@ export function FieldCanvas() {
       <rect x={-unit * 6} y="0" width={unit * 6} height={width} className="wall-blue" />
       <rect x={length} y="0" width={unit * 6} height={width} className="wall-red" />
       <text x={unit * 10} y={width - unit * 10} fontSize={unit * 12} className="field-label">
-        (0, 0)
+        ({shown.x(0)}, {shown.y(0)})
       </text>
       <text
         x={length - unit * 10}
@@ -503,7 +505,7 @@ export function FieldCanvas() {
         textAnchor="end"
         className="field-label"
       >
-        ({length}, {width})
+        ({shown.x(length)}, {shown.y(width)})
       </text>
 
       {/* Filled areas */}
