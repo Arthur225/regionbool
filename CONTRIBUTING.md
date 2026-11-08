@@ -18,7 +18,7 @@ Read [AGENTS.md](AGENTS.md) for the repository map and the rules the code has to
 3. Run `npm run check` and `npm run test:e2e`.
 4. Open a pull request using the template, and say how you verified the change.
 
-Pull requests are merged by a person after review.
+Pull requests are merged by a person after review. `main` is protected: changes reach it only through a pull request, after CI passes on Windows, macOS and Linux. If you're contributing for the first time, a maintainer has to approve CI before it runs.
 
 ## Tests
 
@@ -54,6 +54,6 @@ To release:
 3. The workflow tests and builds on each system, then creates a **draft** release.
 4. Try the installers, then publish the draft by hand.
 
-The same workflow also runs as a check on pull requests that change packaging, and it publishes nothing in that case. It doesn't run on every pull request, because it takes a while on three systems.
+The same workflow also runs as a check on pull requests that change packaging, and it publishes nothing in that case. It doesn't run on every pull request, because it takes a while on three systems. `.github/workflows/ci.yml` runs on every pull request instead, with the checks and end-to-end tests.
 
 Builds are ad-hoc signed on macOS and unsigned on Windows. Signing needs paid certificates, which would be added to `electron-builder.yml` and the workflow as secrets.

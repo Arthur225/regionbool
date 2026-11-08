@@ -60,6 +60,7 @@ Every path in this table must exist. `tests/unit/docs.test.ts` fails if one does
 | `tests/packaged/`                            | Tests that run against the packaged app                                   |
 | `build/icon.svg`                             | App icon source, rendered to `build/icon.png` for packaging               |
 | `electron-builder.yml`                       | Packaging settings                                                        |
+| `.github/workflows/ci.yml`                   | Checks and end-to-end tests on every pull request, on all systems         |
 | `.github/workflows/release.yml`              | Tests and builds on all systems, and creates draft releases               |
 | `tests/e2e/`                                 | Playwright tests that launch the real Electron app                        |
 | `docs/architecture.md`                       | Processes, security model and data flow                                   |
