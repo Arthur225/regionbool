@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import type { AppInfo } from '../shared/ipc';
 import { refreshFields, reopenLastProject, saveProject } from './actions';
 import { FieldCanvas } from './canvas/FieldCanvas';
+import { useAxisConverter } from './coordinates';
 import { ExportDialog } from './dialogs/ExportDialog';
 import { FieldImportDialog } from './dialogs/FieldImportDialog';
 import { PropertiesPanel } from './panels/PropertiesPanel';
@@ -66,6 +67,7 @@ function handleKey(event: KeyboardEvent): void {
 
 function StatusBar({ info }: { info: AppInfo | null }) {
   const cursor = useEditor((s) => s.cursor);
+  const shown = useAxisConverter();
   const tool = useEditor((s) => s.tool);
   const draftCount = useEditor((s) => s.draftPoints.length);
   const dirty = useEditor((s) => s.doc !== s.savedDoc);
@@ -80,7 +82,9 @@ function StatusBar({ info }: { info: AppInfo | null }) {
   return (
     <footer className="status-bar">
       <span data-testid="cursor-position">
-        {cursor ? `x ${cursor.x.toFixed(2)} m, y ${cursor.y.toFixed(2)} m` : 'Off the field map'}
+        {cursor
+          ? `x ${shown.x(cursor.x).toFixed(2)} m, y ${shown.y(cursor.y).toFixed(2)} m`
+          : 'Off the field map'}
       </span>
       <span className="status-hint">{hints[tool] ?? ''}</span>
       {dirty && (

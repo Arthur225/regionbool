@@ -18,6 +18,7 @@ if (FieldRegions.isInScoringZone(drivetrain.getPose())) {
 
 - **Shapes:** rectangles, circles, triangles and free polygons, all rotatable. Combine shapes in one region, and cut holes out of it.
 - **Alliance handling:** set each region to flip on red or stay fixed on the field. The generated code flips the right way for that season.
+- **Either coordinate system:** generate code for poses with the origin at the blue corner or at the center of the field.
 - **Safe export:** you see a diff before anything is written. RegionBool won't replace a file it didn't generate.
 - **Field images:** 2022 to 2026 are included, or import your own image.
 - **See your regions in dashboards:** generated classes can publish their outlines for AdvantageScope, Glass or Elastic.
@@ -79,6 +80,7 @@ FieldRegions.forEachOutline((name, poses) -> Logger.recordOutput("Regions/" + na
 
 ### Good to know
 
+- **Coordinates:** pick the system your robot code uses under **Coordinates** in the right panel. **Origin at blue corner** has +x toward red, and **Origin at field center** has +x toward blue. The field is drawn the same either way, and the numbers you see and type follow your choice. Switching doesn't move your regions.
 - **Alliance:** regions that flip use the alliance from WPILib. Until the alliance is known, they act as if you're on blue.
 - **Edges:** a point exactly on an edge counts as inside a shape, so a point exactly on a hole's edge is outside the region.
 - **After a `git pull`:** reopen the project before saving, because RegionBool doesn't notice `regions.json` changing while it's open.

@@ -12,11 +12,22 @@ import { dirname, join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { generateJava, javaDouble } from '../../src/shared/codegen';
 import { shapeOutline } from '../../src/shared/shapeOps';
-import { flipPoint, regionContainsForAlliance, rectRotation } from '../../src/shared/geometry';
+import {
+  convertOrigin,
+  flipPoint,
+  rectRotation,
+  regionContainsForRobot,
+} from '../../src/shared/geometry';
 import type { AllianceState } from '../../src/shared/geometry';
 import { JAVA_PROFILES, type JavaProfile } from '../../src/shared/javaProfiles';
 import { toMethodName } from '../../src/shared/model';
-import type { FieldSymmetry, Point, RegionProject, Shape } from '../../src/shared/model';
+import type {
+  FieldOrigin,
+  FieldSymmetry,
+  Point,
+  RegionProject,
+  Shape,
+} from '../../src/shared/model';
 import { sampleProject } from './fixtures/sampleProject';
 
 const hasJdk = spawnSync('javac', ['-version']).status === 0;
@@ -199,7 +210,12 @@ function expectedOutlines(project: RegionProject, red: boolean): string[] {
       const outline = shapeOutline(shape);
       const flip = red && region.allianceMode === 'alliance-relative';
       const cells = [...outline, outline[0]!].map((p) => {
-        const point = flip ? flipPoint(p.x, p.y, project.field) : p;
+        const flipped = flip ? flipPoint(p.x, p.y, project.field) : p;
+        const point = convertOrigin(
+          flipped,
+          project.field,
+          project.output.fieldOrigin ?? 'blue-corner',
+        );
         return `${javaDouble(point.x)} ${javaDouble(point.y)}`;
       });
       return [`${toMethodName(region.name)} ${shapeIndex}${hole}`, ...cells].join('|');
@@ -270,18 +286,21 @@ function testPoints(project: RegionProject): Point[] {
 }
 
 describe.skipIf(!hasJdk)('generated Java matches the preview', () => {
-  const cases: [string, FieldSymmetry][] = [
-    ['legacy', 'rotational'],
-    ['legacy', 'mirrored'],
-    ['modern', 'rotational'],
-    ['modern', 'mirrored'],
+  const cases: [string, FieldSymmetry, FieldOrigin][] = [
+    ['legacy', 'rotational', 'blue-corner'],
+    ['legacy', 'mirrored', 'blue-corner'],
+    ['modern', 'rotational', 'blue-corner'],
+    ['modern', 'mirrored', 'blue-corner'],
+    ['legacy', 'rotational', 'center'],
+    ['modern', 'mirrored', 'center'],
   ];
 
   it.each(cases)(
-    '%s profile on a %s field',
-    (profileId, symmetry) => {
+    '%s profile on a %s field, %s origin',
+    (profileId, symmetry, fieldOrigin) => {
       const profile = JAVA_PROFILES[profileId as keyof typeof JAVA_PROFILES];
-      const project = sampleProject(symmetry);
+      const base = sampleProject(symmetry);
+      const project = { ...base, output: { ...base.output, fieldOrigin } };
       const root = mkdtempSync(join(tmpdir(), 'regionbool-java-'));
       tempDirs.push(root);
 
@@ -303,7 +322,8 @@ describe.skipIf(!hasJdk)('generated Java matches the preview', () => {
       );
       expect(compile.status, compile.stderr).toBe(0);
 
-      const points = testPoints(project);
+      // Test points are made in stored coordinates, then given to Java the way the robot sees them.
+      const points = testPoints(project).map((p) => convertOrigin(p, project.field, fieldOrigin));
       writeFileSync(join(root, 'points.txt'), points.map((p) => `${p.x} ${p.y}`).join('\n'));
 
       const run = spawnSync('java', ['-cp', 'classes', 'Harness', 'points.txt'], {
@@ -322,12 +342,13 @@ describe.skipIf(!hasJdk)('generated Java matches the preview', () => {
         points.forEach((point, pointIndex) => {
           const line = lines[allianceIndex * points.length + pointIndex]!;
           project.regions.forEach((region, regionIndex) => {
-            const expected = regionContainsForAlliance(
+            const expected = regionContainsForRobot(
               region,
               point.x,
               point.y,
               alliance,
               project.field,
+              fieldOrigin,
             );
             if (expected) insideCount++;
             const fromTranslation = line[regionIndex * 2] === '1';

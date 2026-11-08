@@ -19,6 +19,7 @@ import { delimiter, join, sep } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { generateJava } from '../../src/shared/codegen';
 import { JAVA_PROFILES, type JavaProfile } from '../../src/shared/javaProfiles';
+import type { FieldOrigin } from '../../src/shared/model';
 import { sampleProject } from './fixtures/sampleProject';
 
 const GRADLE_CACHE = join(homedir(), '.gradle/caches/modules-2/files-2.1');
@@ -102,14 +103,17 @@ const modern =
   findInInstalls('org/wpilib', 'wpimath/wpimath-java', /^2027\./) ??
   findInGradleCache('org.wpilib', 'org.wpilib.wpimath/wpimath-java', /^2027\./);
 
+const ORIGINS: readonly FieldOrigin[] = ['blue-corner', 'center'];
 const tempDirs: string[] = [];
 afterAll(() => tempDirs.forEach((dir) => rmSync(dir, { recursive: true, force: true })));
 
 function compile(
   profile: JavaProfile,
   wpilib: RealWpilib,
+  fieldOrigin: FieldOrigin,
 ): { status: number | null; stderr: string } {
-  const project = sampleProject();
+  const base = sampleProject();
+  const project = { ...base, output: { ...base.output, fieldOrigin } };
   const root = mkdtempSync(join(tmpdir(), 'regionbool-wpilib-'));
   tempDirs.push(root);
   const dir = join(root, 'frc/robot/generated');
@@ -139,8 +143,10 @@ describe('generated Java compiles against real WPILib', () => {
   it.skipIf(!legacy)(
     `legacy profile with ${legacy?.version}`,
     () => {
-      const result = compile(JAVA_PROFILES.legacy, legacy!);
-      expect(result.status, result.stderr).toBe(0);
+      for (const origin of ORIGINS) {
+        const result = compile(JAVA_PROFILES.legacy, legacy!, origin);
+        expect(result.status, result.stderr).toBe(0);
+      }
     },
     60_000,
   );
@@ -148,10 +154,12 @@ describe('generated Java compiles against real WPILib', () => {
   it.skipIf(!modern)(
     `modern profile with ${modern?.version}`,
     (context) => {
-      const result = compile(JAVA_PROFILES.modern, modern!);
-      // 2027 jars need a newer JDK than some machines have, which says nothing about the code.
-      if (/class file has wrong version/.test(result.stderr)) context.skip();
-      expect(result.status, result.stderr).toBe(0);
+      for (const origin of ORIGINS) {
+        const result = compile(JAVA_PROFILES.modern, modern!, origin);
+        // 2027 jars need a newer JDK than some machines have, which says nothing about the code.
+        if (/class file has wrong version/.test(result.stderr)) context.skip();
+        expect(result.status, result.stderr).toBe(0);
+      }
     },
     60_000,
   );

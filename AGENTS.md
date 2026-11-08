@@ -50,6 +50,7 @@ Every path in this table must exist. `tests/unit/docs.test.ts` fails if one does
 | `src/renderer/canvas/FieldCanvas.tsx`        | The field map and all pointer handling                                    |
 | `src/renderer/panels/`                       | Toolbar, region list and properties                                       |
 | `src/renderer/actions.ts`                    | Opening and saving, which involve both processes                          |
+| `src/renderer/coordinates.ts`                | Shows numbers in the project's coordinate system                          |
 | `src/renderer/dialogs/ExportDialog.tsx`      | Export preview, warnings and writing                                      |
 | `src/renderer/dialogs/FieldImportDialog.tsx` | Importing an image and marking the field's corners                        |
 | `src/renderer/App.tsx`                       | Root React component                                                      |
@@ -81,7 +82,7 @@ Breaking one of these is a bug even if the tests pass. Rules marked (lint) are e
 2. **The renderer never touches the filesystem or Electron directly** (lint). It only calls `window.regionbool`.
 3. **Each IPC channel is declared in `src/shared/ipc.ts`** and has one named method in the preload script. Never expose `ipcRenderer` itself.
 4. **The window stays sandboxed:** `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`. An end-to-end test checks this.
-5. **All coordinates are WPILib field coordinates in meters:** blue-origin, +x toward red, +y to the left. Pixels exist only in the rendering layer.
+5. **Stored coordinates are field coordinates in meters:** origin at the blue corner, +x toward red, +y to the left. A project can use the field-center system instead, but only displayed numbers and generated code convert, never stored shapes. Pixels exist only in the rendering layer.
 
 6. **`geometry.ts` and generated Java must agree on every point.** A change to `geometry.ts` needs the same change in `codegen.ts`, and `tests/unit/java-crosscheck.test.ts` proves they match.
 7. **Generated region checks don't allocate,** because robot code calls them every loop. WPILib's `getAlliance()` is the only exception.

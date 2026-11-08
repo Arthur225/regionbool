@@ -9,6 +9,7 @@
     "src/preload/**/*",
     "src/shared/**/*",
     "src/renderer/store.ts",
+    "src/renderer/coordinates.ts",
     "tests/**/*",
     "schemas/*.json",
     "electron.vite.config.ts",

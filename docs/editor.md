@@ -12,6 +12,8 @@ The app icon is `build/icon.svg`, a drawn region with a point inside it. `build/
 
 The SVG's `viewBox` is in meters, so shapes are drawn at their real coordinates and the browser handles scaling. WPILib's +y points up the screen and SVG's points down, so `sy(y) = width - y` is the only conversion. Rectangles are drawn from `rectCorners` as polygons rather than with SVG transforms, which keeps rotation in one place.
 
+The canvas always draws in stored (blue-corner) coordinates. When a project uses the field-center origin, `src/renderer/coordinates.ts` converts only what's shown as numbers: the shape fields, the cursor readout and the corner labels. Typed values are converted back before they're stored.
+
 Handles and labels need a constant size on screen, so their sizes are divided by `pixelsPerMeter`, which is measured from the SVG.
 
 ## State

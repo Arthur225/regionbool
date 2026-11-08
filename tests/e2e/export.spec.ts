@@ -87,6 +87,37 @@ test('a drawing made before opening a project carries over, then exports with a 
   await expect(page.getByTestId('unsaved')).toHaveCount(0);
 });
 
+test('the field-center option changes the numbers shown and the generated code', async () => {
+  const root = createRobotProject();
+  await open(root);
+  await drawRect(page, [2, 1], [6, 4]);
+  const cx = Number(await page.getByTestId('prop-cx').inputValue());
+
+  await page.getByTestId('output-origin').selectOption('center');
+  await saveButton().click();
+  await expect(page.getByTestId('unsaved')).toHaveCount(0);
+  const field = JSON.parse(readFileSync(join(root, REGIONS), 'utf8')).field;
+  const half = field.lengthMeters / 2;
+  await expect(page.getByTestId('prop-cx')).toHaveValue(
+    String(Number((half - cx).toPrecision(12))),
+  );
+
+  // Typing a center-origin value stores it in blue-corner coordinates.
+  await page.getByTestId('prop-cx').fill('1');
+  await page.getByTestId('prop-cx').press('Enter');
+  await saveButton().click();
+  await expect(page.getByTestId('unsaved')).toHaveCount(0);
+  const saved = JSON.parse(readFileSync(join(root, REGIONS), 'utf8'));
+  expect(saved.output.fieldOrigin).toBe('center');
+  expect(saved.regions[0].shapes[0].cx).toBeCloseTo(half - 1, 9);
+
+  await exportButton().click();
+  await writeButton().click();
+  await page.getByRole('button', { name: 'Done' }).click();
+  const java = readFileSync(join(root, TARGET), 'utf8');
+  expect(java).toContain('double x = HALF_FIELD_LENGTH_METERS - point.getX();');
+});
+
 test('canceling export writes nothing', async () => {
   const root = createRobotProject();
   await open(root);
